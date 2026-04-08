@@ -1,5 +1,6 @@
 use portctl::actions::container;
 use portctl::actions::endpoint;
+use portctl::actions::stack;
 use portctl::cli;
 use portctl::client::PortainerClient;
 use portctl::config::Config;
@@ -35,6 +36,33 @@ fn main() {
                         std::process::exit(1);
                     }
                 }
+            }
+            _ => unreachable!(),
+        },
+        Some(("stack", sub)) => match sub.subcommand() {
+            Some(("ls", args)) => {
+                let endpoint = args.get_one::<String>("endpoint").map(|s| s.as_str());
+                stack::list(endpoint);
+            }
+            Some(("inspect", args)) => {
+                let name = args.get_one::<String>("name").unwrap();
+                stack::inspect(name);
+            }
+            Some(("start", args)) => {
+                let name = args.get_one::<String>("name").unwrap();
+                stack::start(name);
+            }
+            Some(("stop", args)) => {
+                let name = args.get_one::<String>("name").unwrap();
+                stack::stop(name);
+            }
+            Some(("update", args)) => {
+                let name = args.get_one::<String>("name").unwrap();
+                stack::update(name);
+            }
+            Some(("rm", args)) => {
+                let name = args.get_one::<String>("name").unwrap();
+                stack::remove(name);
             }
             _ => unreachable!(),
         },

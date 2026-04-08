@@ -50,6 +50,48 @@ pub fn build_cli() -> clap::Command {
                 ),
         )
         .subcommand(
+            clap::Command::new("stack")
+                .about("Manage stacks on a Portainer endpoint")
+                .subcommand_required(true)
+                .arg_required_else_help(true)
+                .subcommand(
+                    clap::Command::new("ls")
+                        .about("List all stacks")
+                        .arg(
+                            clap::Arg::new("endpoint")
+                                .short('e')
+                                .long("endpoint")
+                                .value_name("NAME")
+                                .help("Filter by endpoint name"),
+                        ),
+                )
+                .subcommand(
+                    clap::Command::new("inspect")
+                        .about("Show detailed information about a stack")
+                        .arg(stack_name_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("start")
+                        .about("Start a stack")
+                        .arg(stack_name_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("stop")
+                        .about("Stop a stack")
+                        .arg(stack_name_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("update")
+                        .about("Pull latest git changes and redeploy a stack")
+                        .arg(stack_name_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("rm")
+                        .about("Remove a stack")
+                        .arg(stack_name_arg()),
+                ),
+        )
+        .subcommand(
             clap::Command::new("container")
                 .about("Manage containers on a Portainer endpoint")
                 .subcommand_required(true)
@@ -90,6 +132,13 @@ pub fn build_cli() -> clap::Command {
                         .arg(container_id_arg()),
                 ),
         )
+}
+
+fn stack_name_arg() -> clap::Arg {
+    clap::Arg::new("name")
+        .required(true)
+        .value_name("STACK")
+        .help("Stack name")
 }
 
 fn endpoint_arg() -> clap::Arg {
