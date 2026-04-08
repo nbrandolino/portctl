@@ -49,4 +49,61 @@ pub fn build_cli() -> clap::Command {
                         .about("List all endpoints"),
                 ),
         )
+        .subcommand(
+            clap::Command::new("container")
+                .about("Manage containers on a Portainer endpoint")
+                .subcommand_required(true)
+                .arg_required_else_help(true)
+                .subcommand(
+                    clap::Command::new("ls")
+                        .about("List all containers")
+                        .arg(endpoint_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("start")
+                        .about("Start a container")
+                        .arg(endpoint_arg())
+                        .arg(container_id_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("stop")
+                        .about("Stop a container")
+                        .arg(endpoint_arg())
+                        .arg(container_id_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("restart")
+                        .about("Restart a container")
+                        .arg(endpoint_arg())
+                        .arg(container_id_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("inspect")
+                        .about("Show detailed information about a container")
+                        .arg(endpoint_arg())
+                        .arg(container_id_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("rm")
+                        .about("Remove a container")
+                        .arg(endpoint_arg())
+                        .arg(container_id_arg()),
+                ),
+        )
+}
+
+fn endpoint_arg() -> clap::Arg {
+    clap::Arg::new("endpoint")
+        .short('e')
+        .long("endpoint")
+        .required(true)
+        .value_name("NAME")
+        .help("Portainer endpoint name")
+}
+
+fn container_id_arg() -> clap::Arg {
+    clap::Arg::new("id")
+        .required(true)
+        .value_name("CONTAINER")
+        .help("Container ID or name")
 }

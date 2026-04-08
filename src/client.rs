@@ -67,4 +67,32 @@ impl PortainerClient {
 
         response.json::<Value>().map_err(|e| format!("Failed to parse response: {e}"))
     }
+
+    pub fn post_empty(&self, path: &str) -> Result<(), String> {
+        let url = self.url(path);
+        let response = self.client
+            .post(&url)
+            .send()
+            .map_err(|e| format!("Request failed: {e}"))?;
+
+        if !response.status().is_success() {
+            return Err(format!("HTTP {}: {}", response.status(), url));
+        }
+
+        Ok(())
+    }
+
+    pub fn delete(&self, path: &str) -> Result<(), String> {
+        let url = self.url(path);
+        let response = self.client
+            .delete(&url)
+            .send()
+            .map_err(|e| format!("Request failed: {e}"))?;
+
+        if !response.status().is_success() {
+            return Err(format!("HTTP {}: {}", response.status(), url));
+        }
+
+        Ok(())
+    }
 }

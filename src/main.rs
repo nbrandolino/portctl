@@ -1,3 +1,4 @@
+use portctl::actions::container;
 use portctl::actions::endpoint;
 use portctl::cli;
 use portctl::client::PortainerClient;
@@ -39,6 +40,38 @@ fn main() {
         },
         Some(("endpoint", sub)) => match sub.subcommand() {
             Some(("ls", _)) => endpoint::list(),
+            _ => unreachable!(),
+        },
+        Some(("container", sub)) => match sub.subcommand() {
+            Some(("ls", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                container::list(eid);
+            }
+            Some(("start", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let cid = args.get_one::<String>("id").unwrap().clone();
+                container::start(eid, &cid);
+            }
+            Some(("stop", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let cid = args.get_one::<String>("id").unwrap().clone();
+                container::stop(eid, &cid);
+            }
+            Some(("restart", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let cid = args.get_one::<String>("id").unwrap().clone();
+                container::restart(eid, &cid);
+            }
+            Some(("inspect", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let cid = args.get_one::<String>("id").unwrap().clone();
+                container::inspect(eid, &cid);
+            }
+            Some(("rm", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let cid = args.get_one::<String>("id").unwrap().clone();
+                container::remove(eid, &cid);
+            }
             _ => unreachable!(),
         },
         _ => unreachable!(),
