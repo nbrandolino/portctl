@@ -1,3 +1,4 @@
+use portctl::actions::endpoint;
 use portctl::cli;
 use portctl::client::PortainerClient;
 use portctl::config::Config;
@@ -34,6 +35,10 @@ fn main() {
                     }
                 }
             }
+            _ => unreachable!(),
+        },
+        Some(("endpoint", sub)) => match sub.subcommand() {
+            Some(("ls", _)) => endpoint::list(),
             _ => unreachable!(),
         },
         _ => unreachable!(),

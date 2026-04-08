@@ -39,4 +39,14 @@ pub fn build_cli() -> clap::Command {
                         .about("Verify connectivity to the Portainer instance"),
                 ),
         )
+        .subcommand(
+            clap::Command::new("endpoint")
+                .about("Manage Portainer endpoints")
+                .subcommand_required(true)
+                .arg_required_else_help(true)
+                .subcommand(
+                    clap::Command::new("ls")
+                        .about("List all endpoints"),
+                ),
+        )
 }
