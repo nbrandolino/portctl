@@ -72,8 +72,8 @@ fn main() {
         },
         Some(("container", sub)) => match sub.subcommand() {
             Some(("ls", args)) => {
-                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
-                container::list(eid);
+                let endpoint = args.get_one::<String>("endpoint").map(|s| s.as_str());
+                container::list(endpoint);
             }
             Some(("start", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());

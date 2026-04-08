@@ -99,7 +99,13 @@ pub fn build_cli() -> clap::Command {
                 .subcommand(
                     clap::Command::new("ls")
                         .about("List all containers")
-                        .arg(endpoint_arg()),
+                        .arg(
+                            clap::Arg::new("endpoint")
+                                .short('e')
+                                .long("endpoint")
+                                .value_name("NAME")
+                                .help("Filter by endpoint name"),
+                        ),
                 )
                 .subcommand(
                     clap::Command::new("start")

@@ -1,25 +1,55 @@
 use crate::client::PortainerClient;
 
-pub fn list(endpoint_id: u32) {
+pub fn list(endpoint_filter: Option<&str>) {
+    if let Some(name) = endpoint_filter {
+        let client = PortainerClient::new();
+        let eid = crate::actions::endpoint::resolve_id(name);
+        println!("{:<16} {:<35} {:<12} {}", "ID", "NAME", "STATE", "IMAGE");
+        println!("{}", "-".repeat(80));
+        list_for_endpoint(&client, eid, None);
+    } else {
+        list_all();
+    }
+}
+
+fn list_all() {
     let client = PortainerClient::new();
+
+    let endpoints = match client.get("endpoints") {
+        Ok(data) => match data.as_array() {
+            Some(arr) => arr.to_owned(),
+            None => {
+                eprintln!("Unexpected response format.");
+                std::process::exit(1);
+            }
+        },
+        Err(e) => {
+            eprintln!("Failed to fetch endpoints: {e}");
+            std::process::exit(1);
+        }
+    };
+
+    println!("{:<16} {:<25} {:<12} {:<12} {}", "ID", "NAME", "STATE", "ENDPOINT", "IMAGE");
+    println!("{}", "-".repeat(90));
+
+    for ep in &endpoints {
+        let eid = match ep["Id"].as_u64() {
+            Some(id) => id as u32,
+            None => continue,
+        };
+        let ep_name = ep["Name"].as_str().unwrap_or("(unknown)").to_string();
+        list_for_endpoint(&client, eid, Some(&ep_name));
+    }
+}
+
+fn list_for_endpoint(client: &PortainerClient, endpoint_id: u32, endpoint_name: Option<&str>) {
     let path = format!("endpoints/{}/docker/containers/json?all=1", endpoint_id);
     match client.get(&path) {
         Ok(data) => {
             let containers = match data.as_array() {
                 Some(arr) => arr,
-                None => {
-                    eprintln!("Unexpected response format.");
-                    std::process::exit(1);
-                }
+                None => return,
             };
-
-            if containers.is_empty() {
-                println!("No containers found.");
-                return;
-            }
-
-            println!("{:<16} {:<35} {:<12} {}", "ID", "NAME", "STATE", "IMAGE");
-            println!("{}", "-".repeat(80));
 
             for c in containers {
                 let id = c["Id"].as_str().unwrap_or("").chars().take(12).collect::<String>();
@@ -32,12 +62,16 @@ pub fn list(endpoint_id: u32) {
                 let state = c["State"].as_str().unwrap_or("(unknown)");
                 let image = c["Image"].as_str().unwrap_or("(unknown)");
 
-                println!("{:<16} {:<35} {:<12} {}", id, name, state, image);
+                if let Some(ep_name) = endpoint_name {
+                    println!("{:<16} {:<25} {:<12} {:<12} {}", id, name, state, ep_name, image);
+                } else {
+                    println!("{:<16} {:<35} {:<12} {}", id, name, state, image);
+                }
             }
         }
         Err(e) => {
-            eprintln!("Failed to list containers: {e}");
-            std::process::exit(1);
+            let label = endpoint_name.unwrap_or("endpoint");
+            eprintln!("Warning: failed to list containers for {label}: {e}");
         }
     }
 }
