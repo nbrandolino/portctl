@@ -137,6 +137,12 @@ pub fn build_cli() -> clap::Command {
                         ),
                 )
                 .subcommand(
+                    clap::Command::new("stats")
+                        .about("Show CPU, memory, network, and block I/O usage for a container")
+                        .arg(endpoint_arg())
+                        .arg(container_id_arg()),
+                )
+                .subcommand(
                     clap::Command::new("start")
                         .about("Start a container")
                         .arg(endpoint_arg())

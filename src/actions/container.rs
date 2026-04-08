@@ -6,7 +6,10 @@ pub fn list(endpoint_filter: Option<&str>) {
         let eid = crate::actions::endpoint::resolve_id(name);
         println!("{:<16} {:<35} {:<12} {}", "ID", "NAME", "STATE", "IMAGE");
         println!("{}", "-".repeat(80));
-        list_for_endpoint(&client, eid, None);
+        let count = list_for_endpoint(&client, eid, None);
+        if count == 0 {
+            println!("No containers found.");
+        }
     } else {
         list_all();
     }
@@ -32,23 +35,24 @@ fn list_all() {
     println!("{:<16} {:<25} {:<12} {:<12} {}", "ID", "NAME", "STATE", "ENDPOINT", "IMAGE");
     println!("{}", "-".repeat(90));
 
-    for ep in &endpoints {
-        let eid = match ep["Id"].as_u64() {
-            Some(id) => id as u32,
-            None => continue,
-        };
+    let total: usize = endpoints.iter().filter_map(|ep| {
+        let eid = ep["Id"].as_u64()? as u32;
         let ep_name = ep["Name"].as_str().unwrap_or("(unknown)").to_string();
-        list_for_endpoint(&client, eid, Some(&ep_name));
+        Some(list_for_endpoint(&client, eid, Some(&ep_name)))
+    }).sum();
+
+    if total == 0 {
+        println!("No containers found.");
     }
 }
 
-fn list_for_endpoint(client: &PortainerClient, endpoint_id: u32, endpoint_name: Option<&str>) {
+fn list_for_endpoint(client: &PortainerClient, endpoint_id: u32, endpoint_name: Option<&str>) -> usize {
     let path = format!("endpoints/{}/docker/containers/json?all=1", endpoint_id);
     match client.get(&path) {
         Ok(data) => {
             let containers = match data.as_array() {
                 Some(arr) => arr,
-                None => return,
+                None => return 0,
             };
 
             for c in containers {
@@ -68,10 +72,13 @@ fn list_for_endpoint(client: &PortainerClient, endpoint_id: u32, endpoint_name: 
                     println!("{:<16} {:<35} {:<12} {}", id, name, state, image);
                 }
             }
+
+            containers.len()
         }
         Err(e) => {
             let label = endpoint_name.unwrap_or("endpoint");
             eprintln!("Warning: failed to list containers for {label}: {e}");
+            0
         }
     }
 }
@@ -127,6 +134,84 @@ pub fn logs(endpoint_id: u32, container_id: &str, tail: u32, timestamps: bool, f
         if let Ok(text) = std::str::from_utf8(&payload) {
             print!("{}", text);
         }
+    }
+}
+
+pub fn stats(endpoint_id: u32, container_id: &str) {
+    let client = PortainerClient::new();
+    let path = format!("endpoints/{}/docker/containers/{}/stats?stream=false", endpoint_id, container_id);
+    match client.get(&path) {
+        Ok(data) => {
+            let cpu_delta = data["cpu_stats"]["cpu_usage"]["total_usage"].as_u64().unwrap_or(0)
+                .saturating_sub(data["precpu_stats"]["cpu_usage"]["total_usage"].as_u64().unwrap_or(0));
+            let system_delta = data["cpu_stats"]["system_cpu_usage"].as_u64().unwrap_or(0)
+                .saturating_sub(data["precpu_stats"]["system_cpu_usage"].as_u64().unwrap_or(0));
+            let num_cpus = data["cpu_stats"]["online_cpus"].as_u64().unwrap_or(1);
+            let cpu_pct = if system_delta > 0 {
+                (cpu_delta as f64 / system_delta as f64) * num_cpus as f64 * 100.0
+            } else {
+                0.0
+            };
+
+            let mem_usage = data["memory_stats"]["usage"].as_u64().unwrap_or(0);
+            let mem_cache = data["memory_stats"]["stats"]["cache"].as_u64()
+                .or_else(|| data["memory_stats"]["stats"]["inactive_file"].as_u64())
+                .unwrap_or(0);
+            let mem_actual = mem_usage.saturating_sub(mem_cache);
+            let mem_limit = data["memory_stats"]["limit"].as_u64().unwrap_or(0);
+            let mem_pct = if mem_limit > 0 {
+                mem_actual as f64 / mem_limit as f64 * 100.0
+            } else {
+                0.0
+            };
+
+            let (net_rx, net_tx) = if let Some(networks) = data["networks"].as_object() {
+                networks.values().fold((0u64, 0u64), |(rx, tx), iface| (
+                    rx + iface["rx_bytes"].as_u64().unwrap_or(0),
+                    tx + iface["tx_bytes"].as_u64().unwrap_or(0),
+                ))
+            } else {
+                (0, 0)
+            };
+
+            let (blk_read, blk_write) =
+                if let Some(entries) = data["blkio_stats"]["io_service_bytes_recursive"].as_array() {
+                    entries.iter().fold((0u64, 0u64), |(r, w), e| {
+                        let val = e["value"].as_u64().unwrap_or(0);
+                        match e["op"].as_str().unwrap_or("") {
+                            "Read"  => (r + val, w),
+                            "Write" => (r, w + val),
+                            _       => (r, w),
+                        }
+                    })
+                } else {
+                    (0, 0)
+                };
+
+            println!("CPU:     {:.2}%", cpu_pct);
+            println!("Memory:  {} / {} ({:.2}%)", fmt_bytes(mem_actual), fmt_bytes(mem_limit), mem_pct);
+            println!("Net I/O: {} rx / {} tx", fmt_bytes(net_rx), fmt_bytes(net_tx));
+            println!("Blk I/O: {} read / {} write", fmt_bytes(blk_read), fmt_bytes(blk_write));
+        }
+        Err(e) => {
+            eprintln!("Failed to fetch stats: {e}");
+            std::process::exit(1);
+        }
+    }
+}
+
+fn fmt_bytes(bytes: u64) -> String {
+    const KB: u64 = 1024;
+    const MB: u64 = KB * 1024;
+    const GB: u64 = MB * 1024;
+    if bytes >= GB {
+        format!("{:.2} GB", bytes as f64 / GB as f64)
+    } else if bytes >= MB {
+        format!("{:.2} MB", bytes as f64 / MB as f64)
+    } else if bytes >= KB {
+        format!("{:.2} KB", bytes as f64 / KB as f64)
+    } else {
+        format!("{} B", bytes)
     }
 }
 

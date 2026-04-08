@@ -75,6 +75,11 @@ fn main() {
                 let endpoint = args.get_one::<String>("endpoint").map(|s| s.as_str());
                 container::list(endpoint);
             }
+            Some(("stats", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let cid = args.get_one::<String>("id").unwrap().clone();
+                container::stats(eid, &cid);
+            }
             Some(("logs", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
                 let cid = args.get_one::<String>("id").unwrap().clone();
