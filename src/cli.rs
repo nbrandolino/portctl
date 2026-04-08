@@ -108,6 +108,35 @@ pub fn build_cli() -> clap::Command {
                         ),
                 )
                 .subcommand(
+                    clap::Command::new("logs")
+                        .about("Fetch logs from a container")
+                        .arg(endpoint_arg())
+                        .arg(container_id_arg())
+                        .arg(
+                            clap::Arg::new("tail")
+                                .short('n')
+                                .long("tail")
+                                .value_name("LINES")
+                                .default_value("100")
+                                .value_parser(clap::value_parser!(u32))
+                                .help("Number of lines to show from the end of the logs"),
+                        )
+                        .arg(
+                            clap::Arg::new("timestamps")
+                                .short('t')
+                                .long("timestamps")
+                                .action(clap::ArgAction::SetTrue)
+                                .help("Show timestamps"),
+                        )
+                        .arg(
+                            clap::Arg::new("follow")
+                                .short('f')
+                                .long("follow")
+                                .action(clap::ArgAction::SetTrue)
+                                .help("Stream logs as they are produced"),
+                        ),
+                )
+                .subcommand(
                     clap::Command::new("start")
                         .about("Start a container")
                         .arg(endpoint_arg())

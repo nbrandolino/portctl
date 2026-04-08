@@ -76,6 +76,60 @@ fn list_for_endpoint(client: &PortainerClient, endpoint_id: u32, endpoint_name: 
     }
 }
 
+pub fn logs(endpoint_id: u32, container_id: &str, tail: u32, timestamps: bool, follow: bool) {
+    use std::io::Read;
+
+    let client = PortainerClient::new();
+    let path = format!(
+        "endpoints/{}/docker/containers/{}/logs?stdout=1&stderr=1&tail={}&timestamps={}&follow={}",
+        endpoint_id, container_id, tail,
+        if timestamps { 1 } else { 0 },
+        if follow { 1 } else { 0 },
+    );
+
+    let response = match client.get_response(&path) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Failed to fetch logs: {e}");
+            std::process::exit(1);
+        }
+    };
+
+    // Docker multiplexes stdout/stderr into a single stream with an 8-byte header per chunk:
+    //   byte 0:   stream type (1 = stdout, 2 = stderr)
+    //   bytes 1-3: padding (zeros)
+    //   bytes 4-7: payload length (big-endian u32)
+    let mut stream = response;
+    let mut header = [0u8; 8];
+
+    loop {
+        match stream.read_exact(&mut header) {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
+            Err(e) => {
+                eprintln!("Error reading log stream: {e}");
+                std::process::exit(1);
+            }
+        }
+
+        let payload_len = u32::from_be_bytes([header[4], header[5], header[6], header[7]]) as usize;
+        let mut payload = vec![0u8; payload_len];
+
+        match stream.read_exact(&mut payload) {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
+            Err(e) => {
+                eprintln!("Error reading log stream: {e}");
+                std::process::exit(1);
+            }
+        }
+
+        if let Ok(text) = std::str::from_utf8(&payload) {
+            print!("{}", text);
+        }
+    }
+}
+
 pub fn start(endpoint_id: u32, container_id: &str) {
     let client = PortainerClient::new();
     let path = format!("endpoints/{}/docker/containers/{}/start", endpoint_id, container_id);

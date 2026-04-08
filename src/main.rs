@@ -75,6 +75,14 @@ fn main() {
                 let endpoint = args.get_one::<String>("endpoint").map(|s| s.as_str());
                 container::list(endpoint);
             }
+            Some(("logs", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let cid = args.get_one::<String>("id").unwrap().clone();
+                let tail = *args.get_one::<u32>("tail").unwrap();
+                let timestamps = args.get_flag("timestamps");
+                let follow = args.get_flag("follow");
+                container::logs(eid, &cid, tail, timestamps, follow);
+            }
             Some(("start", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
                 let cid = args.get_one::<String>("id").unwrap().clone();
