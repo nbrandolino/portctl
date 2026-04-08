@@ -1,0 +1,40 @@
+[package]
+name = "portctl"
+version = "0.1.0"
+authors = ["nbrandolino <nickbrandolino134@gmail.com>"]
+description = "A command-line utility designed to manage Docker environments through the Portainer API."
+license = "GPL-3.0-or-later"
+edition = "2021"
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/portctl", dest = "/usr/bin/portctl", mode = "755" }
+]
+
+[profile.release]
+debug = false
+opt-level = "z"
+panic = "abort"
+strip = true
+
+[profile.dev]
+codegen-units = 256
+debug-assertions = true
+debug = true
+incremental = true
+lto = "off"
+opt-level = 0
+overflow-checks = true
+panic = "unwind"
+
+[dev-dependencies]
+tempfile = "3"
+
+[dependencies]
+clap = "4.5"
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+
+[lib]
+name = "portctl"
+path = "src/lib.rs"

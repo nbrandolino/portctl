@@ -1,0 +1,30 @@
+use portctl::cli;
+use portctl::config::Config;
+
+fn main() {
+    let matches = cli::build_cli().get_matches();
+
+    match matches.subcommand() {
+        Some(("config", sub)) => match sub.subcommand() {
+            Some(("set-url", args)) => {
+                let url = args.get_one::<String>("url").unwrap().clone();
+                let mut cfg = Config::load();
+                cfg.set_url(url);
+                println!("Portainer URL saved.");
+            }
+            Some(("set-token", args)) => {
+                let token = args.get_one::<String>("token").unwrap().clone();
+                let mut cfg = Config::load();
+                cfg.set_token(token);
+                println!("API token saved.");
+            }
+            Some(("show", _)) => {
+                let cfg = Config::load();
+                println!("portainer_url: {}", cfg.portainer_url.as_deref().unwrap_or("(not set)"));
+                println!("api_token:     {}", cfg.api_token.as_deref().unwrap_or("(not set)"));
+            }
+            _ => println!("Unknown config subcommand. Use --help for usage."),
+        },
+        _ => println!("No action specified. Use --help for usage."),
+    }
+}
