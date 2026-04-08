@@ -1,4 +1,5 @@
 use portctl::cli;
+use portctl::client::PortainerClient;
 use portctl::config::Config;
 
 fn main() {
@@ -22,6 +23,16 @@ fn main() {
                 let cfg = Config::load();
                 println!("portainer_url: {}", cfg.portainer_url.as_deref().unwrap_or("(not set)"));
                 println!("api_token:     {}", cfg.api_token.as_deref().unwrap_or("(not set)"));
+            }
+            Some(("check", _)) => {
+                let client = PortainerClient::new();
+                match client.get("endpoints") {
+                    Ok(_) => println!("Connection successful."),
+                    Err(e) => {
+                        eprintln!("Connection failed: {e}");
+                        std::process::exit(1);
+                    }
+                }
             }
             _ => unreachable!(),
         },

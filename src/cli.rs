@@ -33,6 +33,10 @@ pub fn build_cli() -> clap::Command {
                 .subcommand(
                     clap::Command::new("show")
                         .about("Show current configuration"),
+                )
+                .subcommand(
+                    clap::Command::new("check")
+                        .about("Verify connectivity to the Portainer instance"),
                 ),
         )
 }
