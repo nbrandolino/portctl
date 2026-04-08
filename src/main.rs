@@ -23,8 +23,8 @@ fn main() {
                 println!("portainer_url: {}", cfg.portainer_url.as_deref().unwrap_or("(not set)"));
                 println!("api_token:     {}", cfg.api_token.as_deref().unwrap_or("(not set)"));
             }
-            _ => println!("Unknown config subcommand. Use --help for usage."),
+            _ => unreachable!(),
         },
-        _ => println!("No action specified. Use --help for usage."),
+        _ => unreachable!(),
     }
 }

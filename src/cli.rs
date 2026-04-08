@@ -5,9 +5,13 @@ pub fn build_cli() -> clap::Command {
         .version(constants::VERSION)
         .author(constants::AUTHOR)
         .about("A command-line utility designed to manage Docker environments through the Portainer API")
+        .subcommand_required(true)
+        .arg_required_else_help(true)
         .subcommand(
             clap::Command::new("config")
                 .about("Manage portctl configuration")
+                .subcommand_required(true)
+                .arg_required_else_help(true)
                 .subcommand(
                     clap::Command::new("set-url")
                         .about("Set the Portainer URL")
