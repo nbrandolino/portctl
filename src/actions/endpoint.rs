@@ -45,11 +45,10 @@ pub fn list() {
                 return;
             }
 
-            println!("{:<6} {:<30} {:<15} {}", "ID", "NAME", "TYPE", "URL");
-            println!("{}", "-".repeat(70));
+            println!("{:<30} {:<15} {}", "NAME", "TYPE", "URL");
+            println!("{}", "-".repeat(64));
 
             for ep in endpoints {
-                let id = ep["Id"].as_u64().unwrap_or(0);
                 let name = ep["Name"].as_str().unwrap_or("(unknown)");
                 let url = ep["URL"].as_str().unwrap_or("(unknown)");
                 let ep_type = match ep["Type"].as_u64().unwrap_or(0) {
@@ -62,7 +61,7 @@ pub fn list() {
                     _ => "Unknown",
                 };
 
-                println!("{:<6} {:<30} {:<15} {}", id, name, ep_type, url);
+                println!("{:<30} {:<15} {}", name, ep_type, url);
             }
         }
         Err(e) => {
