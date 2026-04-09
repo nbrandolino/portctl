@@ -3,6 +3,7 @@ use portctl::actions::endpoint;
 use portctl::actions::image;
 use portctl::actions::network;
 use portctl::actions::stack;
+use portctl::actions::system;
 use portctl::actions::volume;
 use portctl::cli;
 use portctl::client::PortainerClient;
@@ -92,6 +93,13 @@ fn main() {
             Some(("prune", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
                 image::prune(eid);
+            }
+            _ => unreachable!(),
+        },
+        Some(("system", sub)) => match sub.subcommand() {
+            Some(("prune", args)) => {
+                let endpoint = args.get_one::<String>("endpoint").map(|s| s.as_str());
+                system::prune(endpoint);
             }
             _ => unreachable!(),
         },

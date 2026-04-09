@@ -102,6 +102,23 @@ pub fn build_cli() -> clap::Command {
                 ),
         )
         .subcommand(
+            clap::Command::new("system")
+                .about("System-wide operations across all endpoints")
+                .subcommand_required(true)
+                .arg_required_else_help(true)
+                .subcommand(
+                    clap::Command::new("prune")
+                        .about("Remove all stopped containers, dangling images, unused volumes, and unused networks")
+                        .arg(
+                            clap::Arg::new("endpoint")
+                                .short('e')
+                                .long("endpoint")
+                                .value_name("NAME")
+                                .help("Limit to a specific endpoint (default: all endpoints)"),
+                        ),
+                ),
+        )
+        .subcommand(
             clap::Command::new("image")
                 .about("Manage images on a Portainer endpoint")
                 .subcommand_required(true)
