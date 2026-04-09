@@ -102,6 +102,40 @@ pub fn build_cli() -> clap::Command {
                 ),
         )
         .subcommand(
+            clap::Command::new("image")
+                .about("Manage images on a Portainer endpoint")
+                .subcommand_required(true)
+                .arg_required_else_help(true)
+                .subcommand(
+                    clap::Command::new("ls")
+                        .about("List all images on an endpoint")
+                        .arg(endpoint_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("inspect")
+                        .about("Show detailed information about an image")
+                        .arg(endpoint_arg())
+                        .arg(image_ref_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("pull")
+                        .about("Pull an image")
+                        .arg(endpoint_arg())
+                        .arg(image_ref_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("rm")
+                        .about("Remove an image")
+                        .arg(endpoint_arg())
+                        .arg(image_ref_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("prune")
+                        .about("Remove all dangling (untagged) images")
+                        .arg(endpoint_arg()),
+                ),
+        )
+        .subcommand(
             clap::Command::new("volume")
                 .about("Manage volumes on a Portainer endpoint")
                 .subcommand_required(true)
@@ -271,6 +305,13 @@ pub fn build_cli() -> clap::Command {
                         ),
                 ),
         )
+}
+
+fn image_ref_arg() -> clap::Arg {
+    clap::Arg::new("image")
+        .required(true)
+        .value_name("IMAGE")
+        .help("Image name, name:tag, or ID")
 }
 
 fn volume_name_arg() -> clap::Arg {

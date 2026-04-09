@@ -1,5 +1,6 @@
 use portctl::actions::container;
 use portctl::actions::endpoint;
+use portctl::actions::image;
 use portctl::actions::network;
 use portctl::actions::stack;
 use portctl::actions::volume;
@@ -65,6 +66,32 @@ fn main() {
             Some(("rm", args)) => {
                 let name = args.get_one::<String>("name").unwrap();
                 stack::remove(name);
+            }
+            _ => unreachable!(),
+        },
+        Some(("image", sub)) => match sub.subcommand() {
+            Some(("ls", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                image::list(eid);
+            }
+            Some(("inspect", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let img = args.get_one::<String>("image").unwrap();
+                image::inspect(eid, img);
+            }
+            Some(("pull", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let img = args.get_one::<String>("image").unwrap();
+                image::pull(eid, img);
+            }
+            Some(("rm", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let img = args.get_one::<String>("image").unwrap();
+                image::remove(eid, img);
+            }
+            Some(("prune", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                image::prune(eid);
             }
             _ => unreachable!(),
         },
