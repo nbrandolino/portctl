@@ -125,6 +125,21 @@ pub fn create(endpoint_id: u32, name: &str, driver: &str) {
     }
 }
 
+pub fn prune(endpoint_id: u32) {
+    let client = PortainerClient::new();
+    let path = format!("endpoints/{}/docker/networks/prune", endpoint_id);
+    match client.post(&path, serde_json::json!({})) {
+        Ok(data) => {
+            let count = data["NetworksDeleted"].as_array().map(|a| a.len()).unwrap_or(0);
+            println!("Removed {} network(s).", count);
+        }
+        Err(e) => {
+            eprintln!("Failed to prune networks: {e}");
+            std::process::exit(1);
+        }
+    }
+}
+
 pub fn remove(endpoint_id: u32, name: &str) {
     let client = PortainerClient::new();
     let id = resolve_id(endpoint_id, name);

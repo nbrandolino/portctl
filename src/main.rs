@@ -116,6 +116,10 @@ fn main() {
                 let name = args.get_one::<String>("name").unwrap();
                 volume::remove(eid, name);
             }
+            Some(("prune", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                volume::prune(eid);
+            }
             _ => unreachable!(),
         },
         Some(("network", sub)) => match sub.subcommand() {
@@ -138,6 +142,10 @@ fn main() {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
                 let name = args.get_one::<String>("name").unwrap();
                 network::remove(eid, name);
+            }
+            Some(("prune", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                network::prune(eid);
             }
             _ => unreachable!(),
         },
@@ -191,6 +199,10 @@ fn main() {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
                 let cid = args.get_one::<String>("id").unwrap().clone();
                 container::remove(eid, &cid);
+            }
+            Some(("prune", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                container::prune(eid);
             }
             Some(("exec", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());

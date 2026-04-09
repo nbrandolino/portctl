@@ -1,5 +1,15 @@
 use crate::client::PortainerClient;
 
+fn fmt_size(bytes: u64) -> String {
+    const MB: u64 = 1024 * 1024;
+    const GB: u64 = MB * 1024;
+    if bytes >= GB {
+        format!("{:.2} GB", bytes as f64 / GB as f64)
+    } else {
+        format!("{:.2} MB", bytes as f64 / MB as f64)
+    }
+}
+
 pub fn list(endpoint_id: u32) {
     let client = PortainerClient::new();
     let path = format!("endpoints/{}/docker/volumes", endpoint_id);
@@ -82,6 +92,22 @@ pub fn create(endpoint_id: u32, name: &str, driver: &str) {
         Ok(_) => println!("Volume {name} created."),
         Err(e) => {
             eprintln!("Failed to create volume: {e}");
+            std::process::exit(1);
+        }
+    }
+}
+
+pub fn prune(endpoint_id: u32) {
+    let client = PortainerClient::new();
+    let path = format!("endpoints/{}/docker/volumes/prune", endpoint_id);
+    match client.post(&path, serde_json::json!({})) {
+        Ok(data) => {
+            let reclaimed = data["SpaceReclaimed"].as_u64().unwrap_or(0);
+            let count = data["VolumesDeleted"].as_array().map(|a| a.len()).unwrap_or(0);
+            println!("Removed {} volume(s), reclaimed {}.", count, fmt_size(reclaimed));
+        }
+        Err(e) => {
+            eprintln!("Failed to prune volumes: {e}");
             std::process::exit(1);
         }
     }

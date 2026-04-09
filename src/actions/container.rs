@@ -379,6 +379,22 @@ pub fn exec(endpoint_id: u32, container_id: &str, cmd: &[String]) {
     }
 }
 
+pub fn prune(endpoint_id: u32) {
+    let client = PortainerClient::new();
+    let path = format!("endpoints/{}/docker/containers/prune", endpoint_id);
+    match client.post(&path, serde_json::json!({})) {
+        Ok(data) => {
+            let reclaimed = data["SpaceReclaimed"].as_u64().unwrap_or(0);
+            let count = data["ContainersDeleted"].as_array().map(|a| a.len()).unwrap_or(0);
+            println!("Removed {} container(s), reclaimed {}.", count, fmt_bytes(reclaimed));
+        }
+        Err(e) => {
+            eprintln!("Failed to prune containers: {e}");
+            std::process::exit(1);
+        }
+    }
+}
+
 pub fn remove(endpoint_id: u32, container_id: &str) {
     let client = PortainerClient::new();
     let path = format!("endpoints/{}/docker/containers/{}", endpoint_id, container_id);

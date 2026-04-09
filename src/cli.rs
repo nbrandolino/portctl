@@ -170,6 +170,11 @@ pub fn build_cli() -> clap::Command {
                         .about("Remove a volume")
                         .arg(endpoint_arg())
                         .arg(volume_name_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("prune")
+                        .about("Remove all unused volumes")
+                        .arg(endpoint_arg()),
                 ),
         )
         .subcommand(
@@ -207,6 +212,11 @@ pub fn build_cli() -> clap::Command {
                         .about("Remove a network")
                         .arg(endpoint_arg())
                         .arg(network_name_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("prune")
+                        .about("Remove all unused networks")
+                        .arg(endpoint_arg()),
                 ),
         )
         .subcommand(
@@ -289,6 +299,11 @@ pub fn build_cli() -> clap::Command {
                         .about("Remove a container")
                         .arg(endpoint_arg())
                         .arg(container_id_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("prune")
+                        .about("Remove all stopped containers")
+                        .arg(endpoint_arg()),
                 )
                 .subcommand(
                     clap::Command::new("exec")
