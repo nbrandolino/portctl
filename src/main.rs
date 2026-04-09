@@ -113,6 +113,12 @@ fn main() {
                 let cid = args.get_one::<String>("id").unwrap().clone();
                 container::remove(eid, &cid);
             }
+            Some(("exec", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let cid = args.get_one::<String>("id").unwrap().clone();
+                let cmd: Vec<String> = args.get_many::<String>("cmd").unwrap().cloned().collect();
+                container::exec(eid, &cid, &cmd);
+            }
             _ => unreachable!(),
         },
         _ => unreachable!(),

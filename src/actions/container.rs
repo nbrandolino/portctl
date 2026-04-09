@@ -303,6 +303,82 @@ pub fn inspect(endpoint_id: u32, container_id: &str) {
     }
 }
 
+pub fn exec(endpoint_id: u32, container_id: &str, cmd: &[String]) {
+    use std::io::Read;
+
+    let client = PortainerClient::new();
+
+    // Step 1: create the exec instance
+    let create_path = format!("endpoints/{}/docker/containers/{}/exec", endpoint_id, container_id);
+    let create_body = serde_json::json!({
+        "AttachStdin": false,
+        "AttachStdout": true,
+        "AttachStderr": true,
+        "Tty": false,
+        "Cmd": cmd,
+    });
+
+    let exec_id = match client.post(&create_path, create_body) {
+        Ok(data) => match data["Id"].as_str() {
+            Some(id) => id.to_string(),
+            None => {
+                eprintln!("Failed to get exec ID from response.");
+                std::process::exit(1);
+            }
+        },
+        Err(e) => {
+            eprintln!("Failed to create exec instance: {e}");
+            std::process::exit(1);
+        }
+    };
+
+    // Step 2: start the exec instance and stream output
+    let start_path = format!("endpoints/{}/docker/exec/{}/start", endpoint_id, exec_id);
+    let start_body = serde_json::json!({ "Detach": false, "Tty": false });
+
+    let mut stream = match client.post_response(&start_path, start_body) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Failed to start exec: {e}");
+            std::process::exit(1);
+        }
+    };
+
+    // Same multiplexed stream format as container logs
+    let mut header = [0u8; 8];
+    loop {
+        match stream.read_exact(&mut header) {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
+            Err(e) => {
+                eprintln!("Error reading exec stream: {e}");
+                std::process::exit(1);
+            }
+        }
+
+        let payload_len = u32::from_be_bytes([header[4], header[5], header[6], header[7]]) as usize;
+        let mut payload = vec![0u8; payload_len];
+
+        match stream.read_exact(&mut payload) {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
+            Err(e) => {
+                eprintln!("Error reading exec stream: {e}");
+                std::process::exit(1);
+            }
+        }
+
+        let stream_type = header[0];
+        if stream_type == 2 {
+            if let Ok(text) = std::str::from_utf8(&payload) {
+                eprint!("{}", text);
+            }
+        } else if let Ok(text) = std::str::from_utf8(&payload) {
+            print!("{}", text);
+        }
+    }
+}
+
 pub fn remove(endpoint_id: u32, container_id: &str) {
     let client = PortainerClient::new();
     let path = format!("endpoints/{}/docker/containers/{}", endpoint_id, container_id);

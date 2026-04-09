@@ -171,6 +171,20 @@ pub fn build_cli() -> clap::Command {
                         .about("Remove a container")
                         .arg(endpoint_arg())
                         .arg(container_id_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("exec")
+                        .about("Run a command inside a container")
+                        .arg(endpoint_arg())
+                        .arg(container_id_arg())
+                        .arg(
+                            clap::Arg::new("cmd")
+                                .required(true)
+                                .num_args(1..)
+                                .last(true)
+                                .value_name("CMD")
+                                .help("Command to run (use -- to separate from portctl args)"),
+                        ),
                 ),
         )
 }

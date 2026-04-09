@@ -97,6 +97,21 @@ impl PortainerClient {
         response.json::<Value>().map_err(|e| format!("Failed to parse response: {e}"))
     }
 
+    pub fn post_response(&self, path: &str, body: Value) -> Result<reqwest::blocking::Response, String> {
+        let url = self.url(path);
+        let response = self.client
+            .post(&url)
+            .json(&body)
+            .send()
+            .map_err(|e| format!("Request failed: {e}"))?;
+
+        if !response.status().is_success() {
+            return Err(format!("HTTP {}: {}", response.status(), url));
+        }
+
+        Ok(response)
+    }
+
     pub fn get_response(&self, path: &str) -> Result<reqwest::blocking::Response, String> {
         let url = self.url(path);
         let response = self.client.get(&url).send().map_err(|e| format!("Request failed: {e}"))?;

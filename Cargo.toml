@@ -1,6 +1,6 @@
 [package]
 name = "portctl"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["nbrandolino <nickbrandolino134@gmail.com>"]
 description = "A command-line utility designed to manage Docker environments through the Portainer API."
 license = "GPL-3.0-or-later"
