@@ -68,6 +68,10 @@ fn main() {
         },
         Some(("endpoint", sub)) => match sub.subcommand() {
             Some(("ls", _)) => endpoint::list(),
+            Some(("inspect", args)) => {
+                let name = args.get_one::<String>("name").unwrap();
+                endpoint::inspect(name);
+            }
             _ => unreachable!(),
         },
         Some(("container", sub)) => match sub.subcommand() {

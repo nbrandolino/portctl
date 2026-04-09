@@ -47,6 +47,16 @@ pub fn build_cli() -> clap::Command {
                 .subcommand(
                     clap::Command::new("ls")
                         .about("List all endpoints"),
+                )
+                .subcommand(
+                    clap::Command::new("inspect")
+                        .about("Show detailed information about an endpoint")
+                        .arg(
+                            clap::Arg::new("name")
+                                .required(true)
+                                .value_name("NAME")
+                                .help("Endpoint name"),
+                        ),
                 ),
         )
         .subcommand(
