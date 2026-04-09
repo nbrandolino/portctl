@@ -35,56 +35,109 @@ pub fn list(endpoint_filter: Option<&str>) {
         crate::actions::endpoint::resolve_id(name)
     });
 
-    match client.get("stacks") {
-        Ok(data) => {
-            let all_stacks = match data.as_array() {
-                Some(arr) => arr,
-                None => {
-                    eprintln!("Unexpected response format.");
-                    std::process::exit(1);
-                }
-            };
-
-            let stacks: Vec<&serde_json::Value> = all_stacks
-                .iter()
-                .filter(|s| {
-                    if let Some(eid) = endpoint_id {
-                        s["EndpointId"].as_u64().unwrap_or(0) == eid as u64
-                    } else {
-                        true
-                    }
-                })
-                .collect();
-
-            if stacks.is_empty() {
-                println!("No stacks found.");
-                return;
-            }
-
-            println!("{:<35} {:<12} {}", "NAME", "STATUS", "TYPE");
-            println!("{}", "-".repeat(60));
-
-            for s in stacks {
-                let name = s["Name"].as_str().unwrap_or("(unknown)");
-                let status = match s["Status"].as_u64().unwrap_or(0) {
-                    1 => "active",
-                    2 => "inactive",
-                    _ => "unknown",
-                };
-                let stack_type = match s["Type"].as_u64().unwrap_or(0) {
-                    1 => "Swarm",
-                    2 => "Compose",
-                    3 => "Kubernetes",
-                    _ => "Unknown",
-                };
-
-                println!("{:<35} {:<12} {}", name, status, stack_type);
-            }
-        }
+    // Fetch Portainer-managed stacks
+    let portainer_stacks = match client.get("stacks") {
+        Ok(data) => data.as_array().cloned().unwrap_or_default(),
         Err(e) => {
             eprintln!("Failed to list stacks: {e}");
             std::process::exit(1);
         }
+    };
+
+    // Collect the names of Portainer-managed stacks so we can exclude them
+    // when scanning Docker labels for external stacks
+    let managed_names: std::collections::HashSet<String> = portainer_stacks
+        .iter()
+        .filter_map(|s| s["Name"].as_str().map(|n| n.to_string()))
+        .collect();
+
+    // Determine which endpoints to scan for external stacks
+    let endpoints: Vec<(u32, String)> = if let Some(eid) = endpoint_id {
+        vec![(eid, endpoint_filter.unwrap_or("").to_string())]
+    } else {
+        match client.get("endpoints") {
+            Ok(data) => data.as_array().unwrap_or(&vec![]).iter().filter_map(|ep| {
+                let id = ep["Id"].as_u64()? as u32;
+                let name = ep["Name"].as_str().unwrap_or("").to_string();
+                Some((id, name))
+            }).collect(),
+            Err(_) => vec![],
+        }
+    };
+
+    // Find external compose projects by reading container labels
+    let mut external: Vec<(String, String, String)> = vec![];
+    for (eid, ep_name) in &endpoints {
+        let path = format!("endpoints/{}/docker/containers/json?all=1", eid);
+        let containers = match client.get(&path) {
+            Ok(data) => data.as_array().cloned().unwrap_or_default(),
+            Err(_) => continue,
+        };
+
+        let mut seen = std::collections::HashSet::new();
+        for c in &containers {
+            let project = match c["Labels"]["com.docker.compose.project"].as_str() {
+                Some(p) => p.to_string(),
+                None => continue,
+            };
+            if managed_names.contains(&project) || seen.contains(&project) {
+                continue;
+            }
+            seen.insert(project.clone());
+
+            // Infer status from whether any container in the project is running
+            let is_running = containers.iter().any(|other| {
+                other["Labels"]["com.docker.compose.project"].as_str() == Some(&project)
+                    && other["State"].as_str() == Some("running")
+            });
+            let status = if is_running { "active" } else { "inactive" };
+            external.push((project, status.to_string(), ep_name.clone()));
+        }
+    }
+
+    let filtered_stacks: Vec<&serde_json::Value> = portainer_stacks
+        .iter()
+        .filter(|s| {
+            if let Some(eid) = endpoint_id {
+                s["EndpointId"].as_u64().unwrap_or(0) == eid as u64
+            } else {
+                true
+            }
+        })
+        .collect();
+
+    if filtered_stacks.is_empty() && external.is_empty() {
+        println!("No stacks found.");
+        return;
+    }
+
+    println!("{:<35} {:<12} {:<12} {}", "NAME", "STATUS", "TYPE", "ENDPOINT");
+    println!("{}", "-".repeat(76));
+
+    for s in filtered_stacks {
+        let name = s["Name"].as_str().unwrap_or("(unknown)");
+        let status = match s["Status"].as_u64().unwrap_or(0) {
+            1 => "active",
+            2 => "inactive",
+            _ => "unknown",
+        };
+        let stack_type = match s["Type"].as_u64().unwrap_or(0) {
+            1 => "Swarm",
+            2 => "Compose",
+            3 => "Kubernetes",
+            _ => "Unknown",
+        };
+        // Look up endpoint name for this stack
+        let ep_name = endpoints.iter()
+            .find(|(id, _)| *id as u64 == s["EndpointId"].as_u64().unwrap_or(0))
+            .map(|(_, name)| name.as_str())
+            .unwrap_or("(unknown)");
+
+        println!("{:<35} {:<12} {:<12} {}", name, status, stack_type, ep_name);
+    }
+
+    for (name, status, ep_name) in &external {
+        println!("{:<35} {:<12} {:<12} {}", name, status, "External", ep_name);
     }
 }
 
