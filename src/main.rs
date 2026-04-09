@@ -2,6 +2,7 @@ use portctl::actions::container;
 use portctl::actions::endpoint;
 use portctl::actions::network;
 use portctl::actions::stack;
+use portctl::actions::volume;
 use portctl::cli;
 use portctl::client::PortainerClient;
 use portctl::config::Config;
@@ -64,6 +65,29 @@ fn main() {
             Some(("rm", args)) => {
                 let name = args.get_one::<String>("name").unwrap();
                 stack::remove(name);
+            }
+            _ => unreachable!(),
+        },
+        Some(("volume", sub)) => match sub.subcommand() {
+            Some(("ls", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                volume::list(eid);
+            }
+            Some(("inspect", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let name = args.get_one::<String>("name").unwrap();
+                volume::inspect(eid, name);
+            }
+            Some(("create", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let name = args.get_one::<String>("name").unwrap();
+                let driver = args.get_one::<String>("driver").unwrap();
+                volume::create(eid, name, driver);
+            }
+            Some(("rm", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let name = args.get_one::<String>("name").unwrap();
+                volume::remove(eid, name);
             }
             _ => unreachable!(),
         },

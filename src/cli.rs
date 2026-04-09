@@ -102,6 +102,43 @@ pub fn build_cli() -> clap::Command {
                 ),
         )
         .subcommand(
+            clap::Command::new("volume")
+                .about("Manage volumes on a Portainer endpoint")
+                .subcommand_required(true)
+                .arg_required_else_help(true)
+                .subcommand(
+                    clap::Command::new("ls")
+                        .about("List all volumes on an endpoint")
+                        .arg(endpoint_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("inspect")
+                        .about("Show detailed information about a volume")
+                        .arg(endpoint_arg())
+                        .arg(volume_name_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("create")
+                        .about("Create a volume")
+                        .arg(endpoint_arg())
+                        .arg(volume_name_arg())
+                        .arg(
+                            clap::Arg::new("driver")
+                                .short('d')
+                                .long("driver")
+                                .value_name("DRIVER")
+                                .default_value("local")
+                                .help("Volume driver (e.g. local, nfs)"),
+                        ),
+                )
+                .subcommand(
+                    clap::Command::new("rm")
+                        .about("Remove a volume")
+                        .arg(endpoint_arg())
+                        .arg(volume_name_arg()),
+                ),
+        )
+        .subcommand(
             clap::Command::new("network")
                 .about("Manage networks on a Portainer endpoint")
                 .subcommand_required(true)
@@ -234,6 +271,13 @@ pub fn build_cli() -> clap::Command {
                         ),
                 ),
         )
+}
+
+fn volume_name_arg() -> clap::Arg {
+    clap::Arg::new("name")
+        .required(true)
+        .value_name("VOLUME")
+        .help("Volume name")
 }
 
 fn network_name_arg() -> clap::Arg {
