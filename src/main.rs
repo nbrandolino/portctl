@@ -1,5 +1,6 @@
 use portctl::actions::container;
 use portctl::actions::endpoint;
+use portctl::actions::network;
 use portctl::actions::stack;
 use portctl::cli;
 use portctl::client::PortainerClient;
@@ -63,6 +64,29 @@ fn main() {
             Some(("rm", args)) => {
                 let name = args.get_one::<String>("name").unwrap();
                 stack::remove(name);
+            }
+            _ => unreachable!(),
+        },
+        Some(("network", sub)) => match sub.subcommand() {
+            Some(("ls", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                network::list(eid);
+            }
+            Some(("inspect", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let name = args.get_one::<String>("name").unwrap();
+                network::inspect(eid, name);
+            }
+            Some(("create", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let name = args.get_one::<String>("name").unwrap();
+                let driver = args.get_one::<String>("driver").unwrap();
+                network::create(eid, name, driver);
+            }
+            Some(("rm", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let name = args.get_one::<String>("name").unwrap();
+                network::remove(eid, name);
             }
             _ => unreachable!(),
         },

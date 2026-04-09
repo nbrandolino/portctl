@@ -102,6 +102,43 @@ pub fn build_cli() -> clap::Command {
                 ),
         )
         .subcommand(
+            clap::Command::new("network")
+                .about("Manage networks on a Portainer endpoint")
+                .subcommand_required(true)
+                .arg_required_else_help(true)
+                .subcommand(
+                    clap::Command::new("ls")
+                        .about("List all networks on an endpoint")
+                        .arg(endpoint_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("inspect")
+                        .about("Show detailed information about a network")
+                        .arg(endpoint_arg())
+                        .arg(network_name_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("create")
+                        .about("Create a network")
+                        .arg(endpoint_arg())
+                        .arg(network_name_arg())
+                        .arg(
+                            clap::Arg::new("driver")
+                                .short('d')
+                                .long("driver")
+                                .value_name("DRIVER")
+                                .default_value("bridge")
+                                .help("Network driver (e.g. bridge, overlay)"),
+                        ),
+                )
+                .subcommand(
+                    clap::Command::new("rm")
+                        .about("Remove a network")
+                        .arg(endpoint_arg())
+                        .arg(network_name_arg()),
+                ),
+        )
+        .subcommand(
             clap::Command::new("container")
                 .about("Manage containers on a Portainer endpoint")
                 .subcommand_required(true)
@@ -197,6 +234,13 @@ pub fn build_cli() -> clap::Command {
                         ),
                 ),
         )
+}
+
+fn network_name_arg() -> clap::Arg {
+    clap::Arg::new("name")
+        .required(true)
+        .value_name("NETWORK")
+        .help("Network name")
 }
 
 fn stack_name_arg() -> clap::Arg {
