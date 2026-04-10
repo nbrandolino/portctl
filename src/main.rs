@@ -235,6 +235,23 @@ fn main() {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
                 container::prune(eid);
             }
+            Some(("top", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let cid = args.get_one::<String>("id").unwrap().clone();
+                container::top(eid, &cid);
+            }
+            Some(("kill", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let cid = args.get_one::<String>("id").unwrap().clone();
+                let signal = args.get_one::<String>("signal").unwrap();
+                container::kill(eid, &cid, signal);
+            }
+            Some(("rename", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let cid = args.get_one::<String>("id").unwrap().clone();
+                let new_name = args.get_one::<String>("new-name").unwrap();
+                container::rename(eid, &cid, new_name);
+            }
             Some(("exec", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
                 let cid = args.get_one::<String>("id").unwrap().clone();

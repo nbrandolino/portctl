@@ -379,6 +379,101 @@ pub fn exec(endpoint_id: u32, container_id: &str, cmd: &[String]) {
     }
 }
 
+pub fn top(endpoint_id: u32, container_id: &str) {
+    let client = PortainerClient::new();
+    let path = format!("endpoints/{}/docker/containers/{}/top", endpoint_id, container_id);
+    match client.get(&path) {
+        Ok(data) => {
+            let titles = data["Titles"]
+                .as_array()
+                .map(|a| a.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>())
+                .unwrap_or_default();
+            let processes = data["Processes"]
+                .as_array()
+                .cloned()
+                .unwrap_or_default();
+
+            if titles.is_empty() {
+                println!("No processes found.");
+                return;
+            }
+
+            // Print header
+            let col_widths: Vec<usize> = titles.iter().map(|t| t.len()).collect();
+            let col_widths: Vec<usize> = processes.iter().fold(col_widths, |mut widths, row| {
+                if let Some(cols) = row.as_array() {
+                    for (i, col) in cols.iter().enumerate() {
+                        if let Some(s) = col.as_str() {
+                            if i < widths.len() {
+                                widths[i] = widths[i].max(s.len());
+                            }
+                        }
+                    }
+                }
+                widths
+            });
+
+            let header: String = titles.iter().enumerate()
+                .map(|(i, t)| format!("{:<width$}", t, width = col_widths[i]))
+                .collect::<Vec<_>>()
+                .join("  ");
+            println!("{}", header);
+            println!("{}", "-".repeat(header.len()));
+
+            for row in &processes {
+                if let Some(cols) = row.as_array() {
+                    let line: String = cols.iter().enumerate()
+                        .map(|(i, v)| {
+                            let s = v.as_str().unwrap_or("");
+                            if i < col_widths.len() {
+                                format!("{:<width$}", s, width = col_widths[i])
+                            } else {
+                                s.to_string()
+                            }
+                        })
+                        .collect::<Vec<_>>()
+                        .join("  ");
+                    println!("{}", line);
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to fetch processes: {e}");
+            std::process::exit(1);
+        }
+    }
+}
+
+pub fn kill(endpoint_id: u32, container_id: &str, signal: &str) {
+    let client = PortainerClient::new();
+    let path = format!(
+        "endpoints/{}/docker/containers/{}/kill?signal={}",
+        endpoint_id, container_id, signal
+    );
+    match client.post_empty(&path) {
+        Ok(()) => println!("Sent {signal} to container {container_id}."),
+        Err(e) => {
+            eprintln!("Failed to kill container: {e}");
+            std::process::exit(1);
+        }
+    }
+}
+
+pub fn rename(endpoint_id: u32, container_id: &str, new_name: &str) {
+    let client = PortainerClient::new();
+    let path = format!(
+        "endpoints/{}/docker/containers/{}/rename?name={}",
+        endpoint_id, container_id, new_name
+    );
+    match client.post_empty(&path) {
+        Ok(()) => println!("Container {container_id} renamed to {new_name}."),
+        Err(e) => {
+            eprintln!("Failed to rename container: {e}");
+            std::process::exit(1);
+        }
+    }
+}
+
 pub fn prune(endpoint_id: u32) {
     let client = PortainerClient::new();
     let path = format!("endpoints/{}/docker/containers/prune", endpoint_id);

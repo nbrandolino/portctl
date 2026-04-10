@@ -389,6 +389,38 @@ pub fn build_cli() -> clap::Command {
                         .arg(endpoint_arg()),
                 )
                 .subcommand(
+                    clap::Command::new("top")
+                        .about("Show running processes inside a container")
+                        .arg(endpoint_arg())
+                        .arg(container_id_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("kill")
+                        .about("Send a signal to a container")
+                        .arg(endpoint_arg())
+                        .arg(container_id_arg())
+                        .arg(
+                            clap::Arg::new("signal")
+                                .short('s')
+                                .long("signal")
+                                .value_name("SIGNAL")
+                                .default_value("SIGTERM")
+                                .help("Signal to send (e.g. SIGTERM, SIGKILL, SIGHUP)"),
+                        ),
+                )
+                .subcommand(
+                    clap::Command::new("rename")
+                        .about("Rename a container")
+                        .arg(endpoint_arg())
+                        .arg(container_id_arg())
+                        .arg(
+                            clap::Arg::new("new-name")
+                                .required(true)
+                                .value_name("NEW_NAME")
+                                .help("New container name"),
+                        ),
+                )
+                .subcommand(
                     clap::Command::new("exec")
                         .about("Run a command inside a container")
                         .arg(endpoint_arg())
