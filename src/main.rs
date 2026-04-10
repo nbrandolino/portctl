@@ -91,6 +91,10 @@ fn main() {
                 let name = args.get_one::<String>("name").unwrap();
                 stack::compose(name);
             }
+            Some(("edit", args)) => {
+                let name = args.get_one::<String>("name").unwrap();
+                stack::edit(name);
+            }
             _ => unreachable!(),
         },
         Some(("image", sub)) => match sub.subcommand() {

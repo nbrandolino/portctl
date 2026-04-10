@@ -165,6 +165,11 @@ pub fn build_cli() -> clap::Command {
                     clap::Command::new("compose")
                         .about("Print the compose file of a stack")
                         .arg(stack_name_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("edit")
+                        .about("Open a stack's compose file in an editor and redeploy on save")
+                        .arg(stack_name_arg()),
                 ),
         )
         .subcommand(

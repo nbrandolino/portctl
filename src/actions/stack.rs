@@ -315,6 +315,108 @@ pub fn deploy_from_git(
     }
 }
 
+pub fn edit(stack_name: &str) {
+    let client = PortainerClient::new();
+    let id = resolve_id(stack_name);
+
+    let stack = match client.get(&format!("stacks/{}", id)) {
+        Ok(data) => data,
+        Err(e) => {
+            eprintln!("Failed to fetch stack details: {e}");
+            std::process::exit(1);
+        }
+    };
+
+    if !stack["GitConfig"].is_null() {
+        eprintln!(
+            "Error: '{stack_name}' is deployed from a git repository. \
+             Edit the source files in git and run `portctl stack update {stack_name}` to redeploy."
+        );
+        std::process::exit(1);
+    }
+
+    let endpoint_id = stack["EndpointId"].as_u64().unwrap_or_else(|| {
+        eprintln!("Error: could not determine endpoint ID for stack '{stack_name}'.");
+        std::process::exit(1);
+    });
+
+    let env = stack["Env"].as_array().cloned().unwrap_or_default();
+
+    // Fetch current compose content
+    let original = match client.get(&format!("stacks/{}/file", id)) {
+        Ok(data) => data["StackFileContent"].as_str().unwrap_or("").to_string(),
+        Err(e) => {
+            eprintln!("Failed to fetch compose file: {e}");
+            std::process::exit(1);
+        }
+    };
+
+    // Write to a temp file
+    let tmp_path = std::env::temp_dir()
+        .join(format!("portctl-{}-{}.yml", stack_name, std::process::id()));
+
+    if let Err(e) = std::fs::write(&tmp_path, &original) {
+        eprintln!("Failed to write temp file: {e}");
+        std::process::exit(1);
+    }
+
+    // Open in $VISUAL / $EDITOR / vi
+    let editor = std::env::var("VISUAL")
+        .or_else(|_| std::env::var("EDITOR"))
+        .unwrap_or_else(|_| "vi".to_string());
+
+    let status = std::process::Command::new(&editor)
+        .arg(&tmp_path)
+        .status();
+
+    let exit_ok = match status {
+        Ok(s) => s.success(),
+        Err(e) => {
+            let _ = std::fs::remove_file(&tmp_path);
+            eprintln!("Failed to open editor '{editor}': {e}");
+            std::process::exit(1);
+        }
+    };
+
+    if !exit_ok {
+        let _ = std::fs::remove_file(&tmp_path);
+        eprintln!("Editor exited with a non-zero status. No changes applied.");
+        std::process::exit(1);
+    }
+
+    // Read modified content
+    let modified = match std::fs::read_to_string(&tmp_path) {
+        Ok(c) => c,
+        Err(e) => {
+            let _ = std::fs::remove_file(&tmp_path);
+            eprintln!("Failed to read temp file: {e}");
+            std::process::exit(1);
+        }
+    };
+
+    let _ = std::fs::remove_file(&tmp_path);
+
+    if modified == original {
+        println!("No changes made.");
+        return;
+    }
+
+    // Push updated compose file back to Portainer
+    let path = format!("stacks/{}?endpointId={}", id, endpoint_id);
+    let body = serde_json::json!({
+        "StackFileContent": modified,
+        "Env": env,
+    });
+
+    match client.put(&path, body) {
+        Ok(_) => println!("Stack '{stack_name}' updated."),
+        Err(e) => {
+            eprintln!("Failed to update stack: {e}");
+            std::process::exit(1);
+        }
+    }
+}
+
 pub fn compose(stack_name: &str) {
     let client = PortainerClient::new();
     let id = resolve_id(stack_name);
