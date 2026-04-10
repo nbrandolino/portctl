@@ -235,6 +235,16 @@ fn main() {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
                 container::prune(eid);
             }
+            Some(("pause", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let cid = args.get_one::<String>("id").unwrap().clone();
+                container::pause(eid, &cid);
+            }
+            Some(("unpause", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let cid = args.get_one::<String>("id").unwrap().clone();
+                container::unpause(eid, &cid);
+            }
             Some(("top", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
                 let cid = args.get_one::<String>("id").unwrap().clone();

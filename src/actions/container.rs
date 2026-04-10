@@ -379,6 +379,30 @@ pub fn exec(endpoint_id: u32, container_id: &str, cmd: &[String]) {
     }
 }
 
+pub fn pause(endpoint_id: u32, container_id: &str) {
+    let client = PortainerClient::new();
+    let path = format!("endpoints/{}/docker/containers/{}/pause", endpoint_id, container_id);
+    match client.post_empty(&path) {
+        Ok(()) => println!("Container {container_id} paused."),
+        Err(e) => {
+            eprintln!("Failed to pause container: {e}");
+            std::process::exit(1);
+        }
+    }
+}
+
+pub fn unpause(endpoint_id: u32, container_id: &str) {
+    let client = PortainerClient::new();
+    let path = format!("endpoints/{}/docker/containers/{}/unpause", endpoint_id, container_id);
+    match client.post_empty(&path) {
+        Ok(()) => println!("Container {container_id} unpaused."),
+        Err(e) => {
+            eprintln!("Failed to unpause container: {e}");
+            std::process::exit(1);
+        }
+    }
+}
+
 pub fn top(endpoint_id: u32, container_id: &str) {
     let client = PortainerClient::new();
     let path = format!("endpoints/{}/docker/containers/{}/top", endpoint_id, container_id);

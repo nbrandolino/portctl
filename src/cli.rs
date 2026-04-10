@@ -389,6 +389,18 @@ pub fn build_cli() -> clap::Command {
                         .arg(endpoint_arg()),
                 )
                 .subcommand(
+                    clap::Command::new("pause")
+                        .about("Pause all processes in a container")
+                        .arg(endpoint_arg())
+                        .arg(container_id_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("unpause")
+                        .about("Unpause all processes in a container")
+                        .arg(endpoint_arg())
+                        .arg(container_id_arg()),
+                )
+                .subcommand(
                     clap::Command::new("top")
                         .about("Show running processes inside a container")
                         .arg(endpoint_arg())
