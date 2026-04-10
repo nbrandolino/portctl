@@ -2,7 +2,6 @@
   variables:
     CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
     RUSTUP_HOME: "$CI_PROJECT_DIR/.rustup"
-    INSTALL_EPEL: ""
 
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
@@ -15,7 +14,7 @@
       - .rustup/
 
   before_script:
-    - '[ -n "$INSTALL_EPEL" ] && dnf install epel-release -y || true'
+    - 'dnf upgrade -y && dnf install epel-release -y || true'
     - dnf install -y gcc gcc-c++ rpm-build rpmdevtools openssl-devel pkgconf-pkg-config git tar gzip
     - command -v cargo || curl https://sh.rustup.rs -sSf | sh -s -- -y
     - source "$CARGO_HOME/env"

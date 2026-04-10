@@ -4,5 +4,3 @@ el9-build:
   stage: package
   tags:
     - lab
-  variables:
-    INSTALL_EPEL: "1"

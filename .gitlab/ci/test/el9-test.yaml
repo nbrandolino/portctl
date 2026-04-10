@@ -4,5 +4,3 @@ el9-test:
   stage: test
   tags:
     - lab
-  variables:
-    INSTALL_EPEL: "1"
