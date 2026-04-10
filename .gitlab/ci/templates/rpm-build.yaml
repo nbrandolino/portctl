@@ -1,0 +1,30 @@
+.rpm_build_template:
+  variables:
+    CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
+    RUSTUP_HOME: "$CI_PROJECT_DIR/.rustup"
+    INSTALL_EPEL: ""
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+  cache:
+    paths:
+      - .cargo/registry/
+      - .cargo/git/
+      - .cargo/bin/
+      - .rustup/
+
+  before_script:
+    - '[ -n "$INSTALL_EPEL" ] && dnf install epel-release -y || true'
+    - dnf install -y gcc gcc-c++ rpm-build rpmdevtools openssl-devel pkgconf-pkg-config git tar gzip
+    - command -v cargo || curl https://sh.rustup.rs -sSf | sh -s -- -y
+    - source "$CARGO_HOME/env"
+    - command -v cargo-generate-rpm || cargo install cargo-generate-rpm
+
+  script:
+    - cargo build --release
+    - cargo generate-rpm --set-metadata "release=\"1.$(. /etc/os-release; case $ID in fedora) echo fc${VERSION_ID};; rhel|centos|almalinux|rocky) echo el${VERSION_ID%%.*};; *) echo 1;; esac)\""
+
+  artifacts:
+    paths:
+      - target/generate-rpm

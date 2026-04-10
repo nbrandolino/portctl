@@ -1,0 +1,8 @@
+el9-build:
+  extends: .rpm_build_template
+  image: rockylinux/rockylinux:9
+  stage: package
+  tags:
+    - lab
+  variables:
+    INSTALL_EPEL: "1"

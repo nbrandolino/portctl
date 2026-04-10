@@ -1,0 +1,25 @@
+.test_template:
+  variables:
+    CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
+    RUSTUP_HOME: "$CI_PROJECT_DIR/.rustup"
+    INSTALL_EPEL: ""
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "test"'
+
+  cache:
+    paths:
+      - .cargo/registry/
+      - .cargo/git/
+      - .cargo/bin/
+      - .rustup/
+
+  before_script:
+    - '[ -n "$INSTALL_EPEL" ] && dnf install epel-release -y || true'
+    - dnf install -y gcc gcc-c++ openssl-devel pkgconf-pkg-config git
+    - command -v cargo || curl https://sh.rustup.rs -sSf | sh -s -- -y
+    - source "$CARGO_HOME/env"
+
+  script:
+    - cargo build
+    - cargo test

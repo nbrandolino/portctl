@@ -1,0 +1,8 @@
+el9-test:
+  extends: .test_template
+  image: rockylinux/rockylinux:9
+  stage: test
+  tags:
+    - lab
+  variables:
+    INSTALL_EPEL: "1"
