@@ -379,6 +379,124 @@ pub fn exec(endpoint_id: u32, container_id: &str, cmd: &[String]) {
     }
 }
 
+pub fn cp(endpoint_id: u32, src: &str, dest: &str) {
+    // Determine direction based on which arg contains <container>:<path>
+    if let Some(colon) = src.find(':') {
+        let container_id = &src[..colon];
+        let container_path = &src[colon + 1..];
+        cp_from_container(endpoint_id, container_id, container_path, dest);
+    } else if let Some(colon) = dest.find(':') {
+        let container_id = &dest[..colon];
+        let container_path = &dest[colon + 1..];
+        cp_to_container(endpoint_id, src, container_id, container_path);
+    } else {
+        eprintln!("Error: one of SRC or DEST must be in <container>:<path> format.");
+        std::process::exit(1);
+    }
+}
+
+fn cp_from_container(endpoint_id: u32, container_id: &str, container_path: &str, local_path: &str) {
+    let client = PortainerClient::new();
+    let api_path = format!(
+        "endpoints/{}/docker/containers/{}/archive?path={}",
+        endpoint_id, container_id, container_path
+    );
+
+    let bytes = match client.get_bytes(&api_path) {
+        Ok(b) => b,
+        Err(e) => {
+            eprintln!("Failed to fetch from container: {e}");
+            std::process::exit(1);
+        }
+    };
+
+    let local = std::path::Path::new(local_path);
+
+    if local.is_dir() {
+        // Extract into the directory, preserving the original filename(s)
+        let mut ar = tar::Archive::new(std::io::Cursor::new(bytes));
+        if let Err(e) = ar.unpack(local) {
+            eprintln!("Failed to extract archive: {e}");
+            std::process::exit(1);
+        }
+    } else {
+        // Extract the first entry and write it to local_path (rename)
+        let mut ar = tar::Archive::new(std::io::Cursor::new(bytes));
+        let mut entries = match ar.entries() {
+            Ok(e) => e,
+            Err(e) => {
+                eprintln!("Failed to read archive: {e}");
+                std::process::exit(1);
+            }
+        };
+        match entries.next() {
+            Some(Ok(mut entry)) => {
+                if let Err(e) = entry.unpack(local) {
+                    eprintln!("Failed to write file: {e}");
+                    std::process::exit(1);
+                }
+            }
+            Some(Err(e)) => {
+                eprintln!("Failed to read archive entry: {e}");
+                std::process::exit(1);
+            }
+            None => {
+                eprintln!("Archive is empty.");
+                std::process::exit(1);
+            }
+        }
+    }
+
+    println!("Copied {container_id}:{container_path} -> {local_path}");
+}
+
+fn cp_to_container(endpoint_id: u32, local_path: &str, container_id: &str, container_path: &str) {
+    let local = std::path::Path::new(local_path);
+
+    if !local.exists() {
+        eprintln!("Error: local path '{local_path}' does not exist.");
+        std::process::exit(1);
+    }
+
+    // Build tar archive in memory
+    let mut ar = tar::Builder::new(Vec::new());
+
+    if local.is_dir() {
+        if let Err(e) = ar.append_dir_all(".", local) {
+            eprintln!("Failed to create tar archive: {e}");
+            std::process::exit(1);
+        }
+    } else {
+        let file_name = local.file_name().unwrap_or(local.as_os_str());
+        if let Err(e) = ar.append_path_with_name(local, file_name) {
+            eprintln!("Failed to create tar archive: {e}");
+            std::process::exit(1);
+        }
+    }
+
+    let tar_bytes = match ar.into_inner() {
+        Ok(b) => b,
+        Err(e) => {
+            eprintln!("Failed to finalize tar archive: {e}");
+            std::process::exit(1);
+        }
+    };
+
+    let client = PortainerClient::new();
+    let api_path = format!(
+        "endpoints/{}/docker/containers/{}/archive?path={}",
+        endpoint_id, container_id, container_path
+    );
+
+    match client.put_raw(&api_path, tar_bytes) {
+        Ok(()) => println!("Copied {local_path} -> {container_id}:{container_path}"),
+        Err(e) => {
+            eprintln!("Failed to copy to container: {e}");
+            std::process::exit(1);
+        }
+    }
+}
+
 pub fn pause(endpoint_id: u32, container_id: &str) {
     let client = PortainerClient::new();
     let path = format!("endpoints/{}/docker/containers/{}/pause", endpoint_id, container_id);

@@ -389,6 +389,24 @@ pub fn build_cli() -> clap::Command {
                         .arg(endpoint_arg()),
                 )
                 .subcommand(
+                    clap::Command::new("cp")
+                        .about("Copy files between a container and the local filesystem")
+                        .after_help("Use <container>:<path> to refer to a path inside a container.\n\nExamples:\n  portctl container cp -e ep mycontainer:/app/config.yml ./\n  portctl container cp -e ep ./config.yml mycontainer:/app/")
+                        .arg(endpoint_arg())
+                        .arg(
+                            clap::Arg::new("src")
+                                .required(true)
+                                .value_name("SRC")
+                                .help("Source path (use <container>:<path> for container paths)"),
+                        )
+                        .arg(
+                            clap::Arg::new("dest")
+                                .required(true)
+                                .value_name("DEST")
+                                .help("Destination path (use <container>:<path> for container paths)"),
+                        ),
+                )
+                .subcommand(
                     clap::Command::new("pause")
                         .about("Pause all processes in a container")
                         .arg(endpoint_arg())

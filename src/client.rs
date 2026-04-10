@@ -123,6 +123,33 @@ impl PortainerClient {
         Ok(response)
     }
 
+    pub fn get_bytes(&self, path: &str) -> Result<Vec<u8>, String> {
+        let url = self.url(path);
+        let response = self.client.get(&url).send().map_err(|e| format!("Request failed: {e}"))?;
+
+        if !response.status().is_success() {
+            return Err(format!("HTTP {}: {}", response.status(), url));
+        }
+
+        response.bytes().map(|b| b.to_vec()).map_err(|e| format!("Failed to read response: {e}"))
+    }
+
+    pub fn put_raw(&self, path: &str, data: Vec<u8>) -> Result<(), String> {
+        let url = self.url(path);
+        let response = self.client
+            .put(&url)
+            .header(CONTENT_TYPE, "application/x-tar")
+            .body(data)
+            .send()
+            .map_err(|e| format!("Request failed: {e}"))?;
+
+        if !response.status().is_success() {
+            return Err(format!("HTTP {}: {}", response.status(), url));
+        }
+
+        Ok(())
+    }
+
     pub fn delete(&self, path: &str) -> Result<(), String> {
         let url = self.url(path);
         let response = self.client
