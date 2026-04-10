@@ -77,7 +77,14 @@ fn main() {
                     let git_url = args.get_one::<String>("git-url").unwrap();
                     let git_ref = args.get_one::<String>("git-ref").unwrap();
                     let compose_file = args.get_one::<String>("compose-file").unwrap();
-                    stack::deploy_from_git(name, endpoint, git_url, git_ref, compose_file);
+                    let credentials = match (
+                        args.get_one::<String>("git-username"),
+                        args.get_one::<String>("git-password"),
+                    ) {
+                        (Some(u), Some(p)) => Some((u.as_str(), p.as_str())),
+                        _ => None,
+                    };
+                    stack::deploy_from_git(name, endpoint, git_url, git_ref, compose_file, credentials);
                 }
             }
             Some(("compose", args)) => {

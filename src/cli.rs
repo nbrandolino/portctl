@@ -139,6 +139,22 @@ pub fn build_cli() -> clap::Command {
                                 .default_value("docker-compose.yml")
                                 .help("Path to compose file inside the git repository"),
                         )
+                        .arg(
+                            clap::Arg::new("git-username")
+                                .long("git-username")
+                                .value_name("USERNAME")
+                                .requires("git-url")
+                                .requires("git-password")
+                                .help("Username for private repository authentication"),
+                        )
+                        .arg(
+                            clap::Arg::new("git-password")
+                                .long("git-password")
+                                .value_name("PASSWORD")
+                                .requires("git-url")
+                                .requires("git-username")
+                                .help("Password or personal access token for private repository authentication"),
+                        )
                         .group(
                             clap::ArgGroup::new("source")
                                 .args(["file", "git-url"])

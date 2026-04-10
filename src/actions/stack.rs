@@ -281,17 +281,30 @@ pub fn deploy_from_file(name: &str, endpoint_name: &str, file_path: &str) {
     }
 }
 
-pub fn deploy_from_git(name: &str, endpoint_name: &str, git_url: &str, git_ref: &str, compose_file: &str) {
+pub fn deploy_from_git(
+    name: &str,
+    endpoint_name: &str,
+    git_url: &str,
+    git_ref: &str,
+    compose_file: &str,
+    credentials: Option<(&str, &str)>,
+) {
     let eid = crate::actions::endpoint::resolve_id(endpoint_name);
     let client = PortainerClient::new();
     let path = format!("stacks?type=2&method=repository&endpointId={}", eid);
-    let body = serde_json::json!({
+
+    let mut body = serde_json::json!({
         "Name": name,
         "RepositoryURL": git_url,
         "RepositoryReferenceName": git_ref,
         "ComposeFile": compose_file,
-        "RepositoryAuthentication": false,
+        "RepositoryAuthentication": credentials.is_some(),
     });
+
+    if let Some((username, password)) = credentials {
+        body["RepositoryUsername"] = serde_json::Value::String(username.to_string());
+        body["RepositoryPassword"] = serde_json::Value::String(password.to_string());
+    }
 
     match client.post(&path, body) {
         Ok(_) => println!("Stack '{name}' deployed from git ({git_url} @ {git_ref})."),
