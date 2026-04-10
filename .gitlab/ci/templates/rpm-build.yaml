@@ -28,3 +28,4 @@
   artifacts:
     paths:
       - target/generate-rpm
+    expire_in: 1 month
