@@ -99,6 +99,56 @@ pub fn build_cli() -> clap::Command {
                     clap::Command::new("rm")
                         .about("Remove a stack")
                         .arg(stack_name_arg()),
+                )
+                .subcommand(
+                    clap::Command::new("deploy")
+                        .about("Create and deploy a new stack")
+                        .arg(
+                            clap::Arg::new("name")
+                                .required(true)
+                                .value_name("NAME")
+                                .help("Stack name"),
+                        )
+                        .arg(endpoint_arg())
+                        .arg(
+                            clap::Arg::new("file")
+                                .short('f')
+                                .long("file")
+                                .value_name("PATH")
+                                .help("Path to a local compose file")
+                                .conflicts_with("git-url"),
+                        )
+                        .arg(
+                            clap::Arg::new("git-url")
+                                .long("git-url")
+                                .value_name("URL")
+                                .help("Git repository URL")
+                                .conflicts_with("file"),
+                        )
+                        .arg(
+                            clap::Arg::new("git-ref")
+                                .long("git-ref")
+                                .value_name("REF")
+                                .default_value("refs/heads/main")
+                                .help("Git reference (branch, tag, or commit)"),
+                        )
+                        .arg(
+                            clap::Arg::new("compose-file")
+                                .long("compose-file")
+                                .value_name("PATH")
+                                .default_value("docker-compose.yml")
+                                .help("Path to compose file inside the git repository"),
+                        )
+                        .group(
+                            clap::ArgGroup::new("source")
+                                .args(["file", "git-url"])
+                                .required(true),
+                        ),
+                )
+                .subcommand(
+                    clap::Command::new("compose")
+                        .about("Print the compose file of a stack")
+                        .arg(stack_name_arg()),
                 ),
         )
         .subcommand(

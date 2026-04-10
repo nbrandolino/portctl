@@ -68,6 +68,22 @@ fn main() {
                 let name = args.get_one::<String>("name").unwrap();
                 stack::remove(name);
             }
+            Some(("deploy", args)) => {
+                let name = args.get_one::<String>("name").unwrap();
+                let endpoint = args.get_one::<String>("endpoint").unwrap();
+                if let Some(file) = args.get_one::<String>("file") {
+                    stack::deploy_from_file(name, endpoint, file);
+                } else {
+                    let git_url = args.get_one::<String>("git-url").unwrap();
+                    let git_ref = args.get_one::<String>("git-ref").unwrap();
+                    let compose_file = args.get_one::<String>("compose-file").unwrap();
+                    stack::deploy_from_git(name, endpoint, git_url, git_ref, compose_file);
+                }
+            }
+            Some(("compose", args)) => {
+                let name = args.get_one::<String>("name").unwrap();
+                stack::compose(name);
+            }
             _ => unreachable!(),
         },
         Some(("image", sub)) => match sub.subcommand() {

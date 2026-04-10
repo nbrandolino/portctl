@@ -255,6 +255,69 @@ pub fn update(stack_name: &str) {
     }
 }
 
+pub fn deploy_from_file(name: &str, endpoint_name: &str, file_path: &str) {
+    let content = match std::fs::read_to_string(file_path) {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("Failed to read file '{file_path}': {e}");
+            std::process::exit(1);
+        }
+    };
+
+    let eid = crate::actions::endpoint::resolve_id(endpoint_name);
+    let client = PortainerClient::new();
+    let path = format!("stacks?type=2&method=string&endpointId={}", eid);
+    let body = serde_json::json!({
+        "Name": name,
+        "StackFileContent": content,
+    });
+
+    match client.post(&path, body) {
+        Ok(_) => println!("Stack '{name}' deployed."),
+        Err(e) => {
+            eprintln!("Failed to deploy stack: {e}");
+            std::process::exit(1);
+        }
+    }
+}
+
+pub fn deploy_from_git(name: &str, endpoint_name: &str, git_url: &str, git_ref: &str, compose_file: &str) {
+    let eid = crate::actions::endpoint::resolve_id(endpoint_name);
+    let client = PortainerClient::new();
+    let path = format!("stacks?type=2&method=repository&endpointId={}", eid);
+    let body = serde_json::json!({
+        "Name": name,
+        "RepositoryURL": git_url,
+        "RepositoryReferenceName": git_ref,
+        "ComposeFile": compose_file,
+        "RepositoryAuthentication": false,
+    });
+
+    match client.post(&path, body) {
+        Ok(_) => println!("Stack '{name}' deployed from git ({git_url} @ {git_ref})."),
+        Err(e) => {
+            eprintln!("Failed to deploy stack from git: {e}");
+            std::process::exit(1);
+        }
+    }
+}
+
+pub fn compose(stack_name: &str) {
+    let client = PortainerClient::new();
+    let id = resolve_id(stack_name);
+    let path = format!("stacks/{}/file", id);
+    match client.get(&path) {
+        Ok(data) => {
+            let content = data["StackFileContent"].as_str().unwrap_or("");
+            print!("{}", content);
+        }
+        Err(e) => {
+            eprintln!("Failed to fetch compose file: {e}");
+            std::process::exit(1);
+        }
+    }
+}
+
 pub fn remove(stack_name: &str) {
     let client = PortainerClient::new();
     let id = resolve_id(stack_name);
