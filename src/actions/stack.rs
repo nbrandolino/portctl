@@ -351,50 +351,48 @@ pub fn edit(stack_name: &str) {
         }
     };
 
-    // Write to a temp file
-    let tmp_path = std::env::temp_dir()
-        .join(format!("portctl-{}-{}.yml", stack_name, std::process::id()));
+    // Write to a securely-created temp file with .yml suffix for editor syntax highlighting
+    let mut tmp = match tempfile::Builder::new().suffix(".yml").tempfile() {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!("Failed to create temp file: {e}");
+            std::process::exit(1);
+        }
+    };
 
-    if let Err(e) = std::fs::write(&tmp_path, &original) {
+    if let Err(e) = std::io::Write::write_all(&mut tmp, original.as_bytes()) {
         eprintln!("Failed to write temp file: {e}");
         std::process::exit(1);
     }
+
+    let tmp_path = tmp.path().to_path_buf();
 
     // Open in $VISUAL / $EDITOR / vi
     let editor = std::env::var("VISUAL")
         .or_else(|_| std::env::var("EDITOR"))
         .unwrap_or_else(|_| "vi".to_string());
 
-    let status = std::process::Command::new(&editor)
-        .arg(&tmp_path)
-        .status();
-
-    let exit_ok = match status {
+    let exit_ok = match std::process::Command::new(&editor).arg(&tmp_path).status() {
         Ok(s) => s.success(),
         Err(e) => {
-            let _ = std::fs::remove_file(&tmp_path);
             eprintln!("Failed to open editor '{editor}': {e}");
             std::process::exit(1);
         }
     };
 
     if !exit_ok {
-        let _ = std::fs::remove_file(&tmp_path);
         eprintln!("Editor exited with a non-zero status. No changes applied.");
         std::process::exit(1);
     }
 
-    // Read modified content
+    // Read modified content; tmp auto-deletes on drop
     let modified = match std::fs::read_to_string(&tmp_path) {
         Ok(c) => c,
         Err(e) => {
-            let _ = std::fs::remove_file(&tmp_path);
             eprintln!("Failed to read temp file: {e}");
             std::process::exit(1);
         }
     };
-
-    let _ = std::fs::remove_file(&tmp_path);
 
     if modified == original {
         println!("No changes made.");

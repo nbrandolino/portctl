@@ -48,6 +48,7 @@ impl PortainerClient {
 
         let client = Client::builder()
             .default_headers(headers)
+            .timeout(std::time::Duration::from_secs(30))
             .build()
             .expect("Failed to build HTTP client");
 
