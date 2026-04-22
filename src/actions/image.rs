@@ -77,7 +77,7 @@ pub fn list(endpoint_id: u32) {
 
 pub fn inspect(endpoint_id: u32, image: &str) {
     let client = PortainerClient::new();
-    let path = format!("endpoints/{}/docker/images/{}/json", endpoint_id, image);
+    let path = format!("endpoints/{}/docker/images/{}/json", endpoint_id, encode(image));
 
     match client.get(&path) {
         Ok(img) => {
@@ -161,7 +161,7 @@ pub fn pull(endpoint_id: u32, image: &str) {
 
 pub fn remove(endpoint_id: u32, image: &str) {
     let client = PortainerClient::new();
-    let path = format!("endpoints/{}/docker/images/{}", endpoint_id, image);
+    let path = format!("endpoints/{}/docker/images/{}", endpoint_id, encode(image));
     match client.delete(&path) {
         Ok(()) => println!("Image {image} removed."),
         Err(e) => {

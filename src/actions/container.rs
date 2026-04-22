@@ -311,7 +311,7 @@ pub fn inspect(endpoint_id: u32, container_id: &str) {
 pub fn exec(endpoint_id: u32, container_id: &str, cmd: &[String]) {
     use std::io::Read;
 
-    let client = PortainerClient::new();
+    let client = PortainerClient::new_no_timeout();
 
     // Step 1: create the exec instance
     let create_path = format!("endpoints/{}/docker/containers/{}/exec", endpoint_id, encode(container_id));
@@ -380,6 +380,15 @@ pub fn exec(endpoint_id: u32, container_id: &str, cmd: &[String]) {
             }
         } else if let Ok(text) = std::str::from_utf8(&payload) {
             print!("{}", text);
+        }
+    }
+
+    // Step 3: retrieve the exit code and propagate it
+    let inspect_path = format!("endpoints/{}/docker/exec/{}/json", endpoint_id, exec_id);
+    if let Ok(data) = client.get(&inspect_path) {
+        let exit_code = data["ExitCode"].as_i64().unwrap_or(0);
+        if exit_code != 0 {
+            std::process::exit(exit_code as i32);
         }
     }
 }
