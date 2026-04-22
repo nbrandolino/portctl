@@ -88,7 +88,8 @@ pub fn build_cli() -> clap::Command {
                 .subcommand(
                     clap::Command::new("stop")
                         .about("Stop a stack")
-                        .arg(stack_name_arg()),
+                        .arg(stack_name_arg())
+                        .arg(force_arg()),
                 )
                 .subcommand(
                     clap::Command::new("update")
@@ -98,7 +99,8 @@ pub fn build_cli() -> clap::Command {
                 .subcommand(
                     clap::Command::new("rm")
                         .about("Remove a stack")
-                        .arg(stack_name_arg()),
+                        .arg(stack_name_arg())
+                        .arg(force_arg()),
                 )
                 .subcommand(
                     clap::Command::new("deploy")
@@ -186,7 +188,8 @@ pub fn build_cli() -> clap::Command {
                                 .long("endpoint")
                                 .value_name("NAME")
                                 .help("Limit to a specific endpoint (default: all endpoints)"),
-                        ),
+                        )
+                        .arg(force_arg()),
                 ),
         )
         .subcommand(
@@ -215,12 +218,14 @@ pub fn build_cli() -> clap::Command {
                     clap::Command::new("rm")
                         .about("Remove an image")
                         .arg(endpoint_arg())
-                        .arg(image_ref_arg()),
+                        .arg(image_ref_arg())
+                        .arg(force_arg()),
                 )
                 .subcommand(
                     clap::Command::new("prune")
                         .about("Remove all dangling (untagged) images")
-                        .arg(endpoint_arg()),
+                        .arg(endpoint_arg())
+                        .arg(force_arg()),
                 ),
         )
         .subcommand(
@@ -257,12 +262,14 @@ pub fn build_cli() -> clap::Command {
                     clap::Command::new("rm")
                         .about("Remove a volume")
                         .arg(endpoint_arg())
-                        .arg(volume_name_arg()),
+                        .arg(volume_name_arg())
+                        .arg(force_arg()),
                 )
                 .subcommand(
                     clap::Command::new("prune")
                         .about("Remove all unused volumes")
-                        .arg(endpoint_arg()),
+                        .arg(endpoint_arg())
+                        .arg(force_arg()),
                 ),
         )
         .subcommand(
@@ -299,12 +306,14 @@ pub fn build_cli() -> clap::Command {
                     clap::Command::new("rm")
                         .about("Remove a network")
                         .arg(endpoint_arg())
-                        .arg(network_name_arg()),
+                        .arg(network_name_arg())
+                        .arg(force_arg()),
                 )
                 .subcommand(
                     clap::Command::new("prune")
                         .about("Remove all unused networks")
-                        .arg(endpoint_arg()),
+                        .arg(endpoint_arg())
+                        .arg(force_arg()),
                 ),
         )
         .subcommand(
@@ -368,7 +377,8 @@ pub fn build_cli() -> clap::Command {
                     clap::Command::new("stop")
                         .about("Stop a container")
                         .arg(endpoint_arg())
-                        .arg(container_id_arg()),
+                        .arg(container_id_arg())
+                        .arg(force_arg()),
                 )
                 .subcommand(
                     clap::Command::new("restart")
@@ -386,12 +396,14 @@ pub fn build_cli() -> clap::Command {
                     clap::Command::new("rm")
                         .about("Remove a container")
                         .arg(endpoint_arg())
-                        .arg(container_id_arg()),
+                        .arg(container_id_arg())
+                        .arg(force_arg()),
                 )
                 .subcommand(
                     clap::Command::new("prune")
                         .about("Remove all stopped containers")
-                        .arg(endpoint_arg()),
+                        .arg(endpoint_arg())
+                        .arg(force_arg()),
                 )
                 .subcommand(
                     clap::Command::new("cp")
@@ -441,7 +453,8 @@ pub fn build_cli() -> clap::Command {
                                 .value_name("SIGNAL")
                                 .default_value("SIGTERM")
                                 .help("Signal to send (e.g. SIGTERM, SIGKILL, SIGHUP)"),
-                        ),
+                        )
+                        .arg(force_arg()),
                 )
                 .subcommand(
                     clap::Command::new("rename")
@@ -514,4 +527,12 @@ fn container_id_arg() -> clap::Arg {
         .required(true)
         .value_name("CONTAINER")
         .help("Container ID or name")
+}
+
+fn force_arg() -> clap::Arg {
+    clap::Arg::new("yes")
+        .short('y')
+        .long("yes")
+        .action(clap::ArgAction::SetTrue)
+        .help("Skip confirmation prompt")
 }

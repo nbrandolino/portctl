@@ -8,6 +8,7 @@ use portctl::actions::volume;
 use portctl::cli;
 use portctl::client::PortainerClient;
 use portctl::config::Config;
+use portctl::utils::confirm;
 
 fn main() {
     let matches = cli::build_cli().get_matches();
@@ -58,6 +59,9 @@ fn main() {
             }
             Some(("stop", args)) => {
                 let name = args.get_one::<String>("name").unwrap();
+                if !args.get_flag("yes") && !confirm(&format!("Stop stack '{name}'?")) {
+                    return;
+                }
                 stack::stop(name);
             }
             Some(("update", args)) => {
@@ -66,6 +70,9 @@ fn main() {
             }
             Some(("rm", args)) => {
                 let name = args.get_one::<String>("name").unwrap();
+                if !args.get_flag("yes") && !confirm(&format!("Remove stack '{name}'?")) {
+                    return;
+                }
                 stack::remove(name);
             }
             Some(("deploy", args)) => {
@@ -115,10 +122,16 @@ fn main() {
             Some(("rm", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
                 let img = args.get_one::<String>("image").unwrap();
+                if !args.get_flag("yes") && !confirm(&format!("Remove image '{img}'?")) {
+                    return;
+                }
                 image::remove(eid, img);
             }
             Some(("prune", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                if !args.get_flag("yes") && !confirm("Remove all dangling images?") {
+                    return;
+                }
                 image::prune(eid);
             }
             _ => unreachable!(),
@@ -126,6 +139,9 @@ fn main() {
         Some(("system", sub)) => match sub.subcommand() {
             Some(("prune", args)) => {
                 let endpoint = args.get_one::<String>("endpoint").map(|s| s.as_str());
+                if !args.get_flag("yes") && !confirm("This will prune all stopped containers, dangling images, unused volumes, and unused networks. Proceed?") {
+                    return;
+                }
                 system::prune(endpoint);
             }
             _ => unreachable!(),
@@ -149,10 +165,16 @@ fn main() {
             Some(("rm", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
                 let name = args.get_one::<String>("name").unwrap();
+                if !args.get_flag("yes") && !confirm(&format!("Remove volume '{name}'?")) {
+                    return;
+                }
                 volume::remove(eid, name);
             }
             Some(("prune", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                if !args.get_flag("yes") && !confirm("Remove all unused volumes?") {
+                    return;
+                }
                 volume::prune(eid);
             }
             _ => unreachable!(),
@@ -176,10 +198,16 @@ fn main() {
             Some(("rm", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
                 let name = args.get_one::<String>("name").unwrap();
+                if !args.get_flag("yes") && !confirm(&format!("Remove network '{name}'?")) {
+                    return;
+                }
                 network::remove(eid, name);
             }
             Some(("prune", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                if !args.get_flag("yes") && !confirm("Remove all unused networks?") {
+                    return;
+                }
                 network::prune(eid);
             }
             _ => unreachable!(),
@@ -218,6 +246,9 @@ fn main() {
             Some(("stop", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
                 let cid = args.get_one::<String>("id").unwrap().clone();
+                if !args.get_flag("yes") && !confirm(&format!("Stop container '{cid}'?")) {
+                    return;
+                }
                 container::stop(eid, &cid);
             }
             Some(("restart", args)) => {
@@ -233,10 +264,16 @@ fn main() {
             Some(("rm", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
                 let cid = args.get_one::<String>("id").unwrap().clone();
+                if !args.get_flag("yes") && !confirm(&format!("Remove container '{cid}'?")) {
+                    return;
+                }
                 container::remove(eid, &cid);
             }
             Some(("prune", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                if !args.get_flag("yes") && !confirm("Remove all stopped containers?") {
+                    return;
+                }
                 container::prune(eid);
             }
             Some(("cp", args)) => {
@@ -264,6 +301,9 @@ fn main() {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
                 let cid = args.get_one::<String>("id").unwrap().clone();
                 let signal = args.get_one::<String>("signal").unwrap();
+                if !args.get_flag("yes") && !confirm(&format!("Send {signal} to container '{cid}'?")) {
+                    return;
+                }
                 container::kill(eid, &cid, signal);
             }
             Some(("rename", args)) => {
