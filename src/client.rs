@@ -3,6 +3,22 @@ use reqwest::blocking::Client;
 use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
 use serde_json::Value;
 
+fn api_error(status: reqwest::StatusCode, url: &str, body: String) -> String {
+    let detail = if !body.is_empty() {
+        serde_json::from_str::<Value>(&body)
+            .ok()
+            .and_then(|j| j["message"].as_str().map(|s| s.to_string()))
+            .unwrap_or_else(|| body.trim().to_string())
+    } else {
+        String::new()
+    };
+    if detail.is_empty() {
+        format!("HTTP {}: {}", status, url)
+    } else {
+        format!("HTTP {}: {} — {}", status, url, detail)
+    }
+}
+
 pub struct PortainerClient {
     base_url: String,
     client: Client,
@@ -47,7 +63,9 @@ impl PortainerClient {
         let response = self.client.get(&url).send().map_err(|e| format!("Request failed: {e}"))?;
 
         if !response.status().is_success() {
-            return Err(format!("HTTP {}: {}", response.status(), url));
+            let status = response.status();
+            let body = response.text().unwrap_or_default();
+            return Err(api_error(status, &url, body));
         }
 
         response.json::<Value>().map_err(|e| format!("Failed to parse response: {e}"))
@@ -62,7 +80,9 @@ impl PortainerClient {
             .map_err(|e| format!("Request failed: {e}"))?;
 
         if !response.status().is_success() {
-            return Err(format!("HTTP {}: {}", response.status(), url));
+            let status = response.status();
+            let body = response.text().unwrap_or_default();
+            return Err(api_error(status, &url, body));
         }
 
         response.json::<Value>().map_err(|e| format!("Failed to parse response: {e}"))
@@ -76,7 +96,9 @@ impl PortainerClient {
             .map_err(|e| format!("Request failed: {e}"))?;
 
         if !response.status().is_success() {
-            return Err(format!("HTTP {}: {}", response.status(), url));
+            let status = response.status();
+            let body = response.text().unwrap_or_default();
+            return Err(api_error(status, &url, body));
         }
 
         Ok(())
@@ -91,7 +113,9 @@ impl PortainerClient {
             .map_err(|e| format!("Request failed: {e}"))?;
 
         if !response.status().is_success() {
-            return Err(format!("HTTP {}: {}", response.status(), url));
+            let status = response.status();
+            let body = response.text().unwrap_or_default();
+            return Err(api_error(status, &url, body));
         }
 
         response.json::<Value>().map_err(|e| format!("Failed to parse response: {e}"))
@@ -106,7 +130,9 @@ impl PortainerClient {
             .map_err(|e| format!("Request failed: {e}"))?;
 
         if !response.status().is_success() {
-            return Err(format!("HTTP {}: {}", response.status(), url));
+            let status = response.status();
+            let body = response.text().unwrap_or_default();
+            return Err(api_error(status, &url, body));
         }
 
         Ok(response)
@@ -117,7 +143,9 @@ impl PortainerClient {
         let response = self.client.get(&url).send().map_err(|e| format!("Request failed: {e}"))?;
 
         if !response.status().is_success() {
-            return Err(format!("HTTP {}: {}", response.status(), url));
+            let status = response.status();
+            let body = response.text().unwrap_or_default();
+            return Err(api_error(status, &url, body));
         }
 
         Ok(response)
@@ -128,7 +156,9 @@ impl PortainerClient {
         let response = self.client.get(&url).send().map_err(|e| format!("Request failed: {e}"))?;
 
         if !response.status().is_success() {
-            return Err(format!("HTTP {}: {}", response.status(), url));
+            let status = response.status();
+            let body = response.text().unwrap_or_default();
+            return Err(api_error(status, &url, body));
         }
 
         response.bytes().map(|b| b.to_vec()).map_err(|e| format!("Failed to read response: {e}"))
@@ -144,7 +174,9 @@ impl PortainerClient {
             .map_err(|e| format!("Request failed: {e}"))?;
 
         if !response.status().is_success() {
-            return Err(format!("HTTP {}: {}", response.status(), url));
+            let status = response.status();
+            let body = response.text().unwrap_or_default();
+            return Err(api_error(status, &url, body));
         }
 
         Ok(())
@@ -158,7 +190,9 @@ impl PortainerClient {
             .map_err(|e| format!("Request failed: {e}"))?;
 
         if !response.status().is_success() {
-            return Err(format!("HTTP {}: {}", response.status(), url));
+            let status = response.status();
+            let body = response.text().unwrap_or_default();
+            return Err(api_error(status, &url, body));
         }
 
         Ok(())

@@ -1,4 +1,5 @@
 use crate::client::PortainerClient;
+use urlencoding::encode;
 
 fn fmt_size(bytes: u64) -> String {
     const MB: u64 = 1024 * 1024;
@@ -47,7 +48,7 @@ pub fn list(endpoint_id: u32) {
 
 pub fn inspect(endpoint_id: u32, name: &str) {
     let client = PortainerClient::new();
-    let path = format!("endpoints/{}/docker/volumes/{}", endpoint_id, name);
+    let path = format!("endpoints/{}/docker/volumes/{}", endpoint_id, encode(name));
     match client.get(&path) {
         Ok(v) => {
             println!("Name:       {}", v["Name"].as_str().unwrap_or("(unknown)"));
@@ -115,7 +116,7 @@ pub fn prune(endpoint_id: u32) {
 
 pub fn remove(endpoint_id: u32, name: &str) {
     let client = PortainerClient::new();
-    let path = format!("endpoints/{}/docker/volumes/{}", endpoint_id, name);
+    let path = format!("endpoints/{}/docker/volumes/{}", endpoint_id, encode(name));
     match client.delete(&path) {
         Ok(()) => println!("Volume {name} removed."),
         Err(e) => {

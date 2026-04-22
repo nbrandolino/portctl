@@ -1,5 +1,6 @@
 use crate::client::PortainerClient;
 use std::collections::HashSet;
+use urlencoding::encode;
 
 fn fmt_size(bytes: u64) -> String {
     const MB: u64 = 1024 * 1024;
@@ -144,7 +145,7 @@ pub fn pull(endpoint_id: u32, image: &str) {
 
     let path = format!(
         "endpoints/{}/docker/images/create?fromImage={}&tag={}",
-        endpoint_id, from_image, tag
+        endpoint_id, encode(from_image), encode(tag)
     );
 
     print!("Pulling {}:{}... ", from_image, tag);
