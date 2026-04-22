@@ -385,11 +385,15 @@ pub fn exec(endpoint_id: u32, container_id: &str, cmd: &[String]) {
 
     // Step 3: retrieve the exit code and propagate it
     let inspect_path = format!("endpoints/{}/docker/exec/{}/json", endpoint_id, exec_id);
-    if let Ok(data) = client.get(&inspect_path) {
-        let exit_code = data["ExitCode"].as_i64().unwrap_or(0);
-        if exit_code != 0 {
-            std::process::exit(exit_code as i32);
+    let exit_code = match client.get(&inspect_path) {
+        Ok(data) => data["ExitCode"].as_i64().unwrap_or(0),
+        Err(e) => {
+            eprintln!("Warning: could not retrieve exec exit code: {e}");
+            0
         }
+    };
+    if exit_code != 0 {
+        std::process::exit(exit_code as i32);
     }
 }
 

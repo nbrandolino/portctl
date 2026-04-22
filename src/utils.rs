@@ -10,6 +10,11 @@ pub fn ensure_config_dir_exists(config_path: &Path) {
 }
 
 pub fn confirm(prompt: &str) -> bool {
+    use std::io::IsTerminal;
+    if !io::stdin().is_terminal() {
+        eprintln!("Error: confirmation required but stdin is not a terminal. Use -y/--yes to skip.");
+        std::process::exit(1);
+    }
     eprint!("{prompt} [y/N] ");
     io::stderr().flush().ok();
     let mut input = String::new();

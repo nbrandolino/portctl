@@ -30,7 +30,14 @@ fn main() {
             Some(("show", _)) => {
                 let cfg = Config::load();
                 println!("portainer_url: {}", cfg.portainer_url.as_deref().unwrap_or("(not set)"));
-                println!("api_token:     {}", cfg.api_token.as_deref().unwrap_or("(not set)"));
+                let token_display = cfg.api_token.as_deref().map(|t| {
+                    if t.len() <= 8 {
+                        "*".repeat(t.len())
+                    } else {
+                        format!("{}****{}", &t[..4], &t[t.len() - 4..])
+                    }
+                }).unwrap_or_else(|| "(not set)".to_string());
+                println!("api_token:     {token_display}");
             }
             Some(("check", _)) => {
                 let client = PortainerClient::new();
