@@ -36,6 +36,17 @@ portctl config show     # print current config
 portctl <SUBCOMMAND> [OPTIONS]
 ```
 
+### Confirmation prompts
+Destructive commands (`rm`, `prune`, `stop`, `kill`) prompt for confirmation before executing:
+```
+Remove container 'myapp'? [y/N]
+```
+Use `-y` / `--yes` to skip the prompt in scripts or non-interactive environments:
+```bash
+portctl container rm -e my-endpoint myapp --yes
+portctl system prune --yes
+```
+
 ---
 
 ## Subcommands
