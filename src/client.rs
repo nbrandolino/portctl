@@ -42,15 +42,23 @@ impl PortainerClient {
                 std::process::exit(1);
             });
 
+        let api_key_header = HeaderValue::from_str(&api_token).unwrap_or_else(|_| {
+            eprintln!("Error: API token contains invalid characters. Run `portctl config set-token <TOKEN>` to reset it.");
+            std::process::exit(1);
+        });
+
         let mut headers = HeaderMap::new();
-        headers.insert("X-API-Key", HeaderValue::from_str(&api_token).expect("Invalid API token"));
+        headers.insert("X-API-Key", api_key_header);
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
 
         let mut builder = Client::builder().default_headers(headers);
         if let Some(t) = timeout {
             builder = builder.timeout(t);
         }
-        let client = builder.build().expect("Failed to build HTTP client");
+        let client = builder.build().unwrap_or_else(|e| {
+            eprintln!("Error: Failed to build HTTP client: {e}");
+            std::process::exit(1);
+        });
 
         Self { base_url, client }
     }
