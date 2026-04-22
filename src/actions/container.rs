@@ -87,7 +87,11 @@ fn list_for_endpoint(client: &PortainerClient, endpoint_id: u32, endpoint_name: 
 pub fn logs(endpoint_id: u32, container_id: &str, tail: u32, timestamps: bool, follow: bool) {
     use std::io::Read;
 
-    let client = PortainerClient::new();
+    let client = if follow {
+        PortainerClient::new_no_timeout()
+    } else {
+        PortainerClient::new()
+    };
     let path = format!(
         "endpoints/{}/docker/containers/{}/logs?stdout=1&stderr=1&tail={}&timestamps={}&follow={}",
         endpoint_id, encode(container_id), tail,

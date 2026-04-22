@@ -136,7 +136,7 @@ pub fn inspect(endpoint_id: u32, image: &str) {
 }
 
 pub fn pull(endpoint_id: u32, image: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::new_no_timeout();
 
     let (from_image, tag) = match image.rsplit_once(':') {
         Some((name, tag)) => (name, tag),
@@ -149,6 +149,7 @@ pub fn pull(endpoint_id: u32, image: &str) {
     );
 
     print!("Pulling {}:{}... ", from_image, tag);
+    let _ = std::io::Write::flush(&mut std::io::stdout());
     match client.post_empty(&path) {
         Ok(()) => println!("done."),
         Err(e) => {

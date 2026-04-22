@@ -25,7 +25,7 @@ pub struct PortainerClient {
 }
 
 impl PortainerClient {
-    pub fn new() -> Self {
+    fn build(timeout: Option<std::time::Duration>) -> Self {
         let cfg = Config::load();
 
         let base_url = cfg
@@ -46,13 +46,21 @@ impl PortainerClient {
         headers.insert("X-API-Key", HeaderValue::from_str(&api_token).expect("Invalid API token"));
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
 
-        let client = Client::builder()
-            .default_headers(headers)
-            .timeout(std::time::Duration::from_secs(30))
-            .build()
-            .expect("Failed to build HTTP client");
+        let mut builder = Client::builder().default_headers(headers);
+        if let Some(t) = timeout {
+            builder = builder.timeout(t);
+        }
+        let client = builder.build().expect("Failed to build HTTP client");
 
         Self { base_url, client }
+    }
+
+    pub fn new() -> Self {
+        Self::build(Some(std::time::Duration::from_secs(30)))
+    }
+
+    pub fn new_no_timeout() -> Self {
+        Self::build(None)
     }
 
     fn url(&self, path: &str) -> String {

@@ -434,7 +434,21 @@ pub fn compose(stack_name: &str) {
 pub fn remove(stack_name: &str) {
     let client = PortainerClient::new();
     let id = resolve_id(stack_name);
-    let path = format!("stacks/{}", id);
+
+    let stack = match client.get(&format!("stacks/{}", id)) {
+        Ok(data) => data,
+        Err(e) => {
+            eprintln!("Failed to fetch stack details: {e}");
+            std::process::exit(1);
+        }
+    };
+
+    let endpoint_id = stack["EndpointId"].as_u64().unwrap_or_else(|| {
+        eprintln!("Error: could not determine endpoint ID for stack '{stack_name}'.");
+        std::process::exit(1);
+    });
+
+    let path = format!("stacks/{}?endpointId={}", id, endpoint_id);
     match client.delete(&path) {
         Ok(()) => println!("Stack {stack_name} removed."),
         Err(e) => {
