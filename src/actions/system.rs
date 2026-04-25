@@ -64,7 +64,9 @@ pub fn prune(endpoint_filter: Option<&str>) {
             Err(e) => eprintln!("  Images:     failed ({})", e),
         }
 
-        let volume_path = format!("endpoints/{}/docker/volumes/prune", eid);
+        // filters={"all":["true"]} is required (Docker API 1.42+) to prune named volumes,
+        // not just anonymous ones.
+        let volume_path = format!("endpoints/{}/docker/volumes/prune?filters=%7B%22all%22%3A%5B%22true%22%5D%7D", eid);
         match client.post(&volume_path, serde_json::json!({})) {
             Ok(data) => {
                 let count = data["VolumesDeleted"].as_array().map(|a| a.len()).unwrap_or(0);
