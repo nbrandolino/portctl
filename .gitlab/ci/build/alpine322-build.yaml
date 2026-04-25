@@ -1,0 +1,35 @@
+alpine322-build:
+  image: alpine:3.22
+  stage: build
+  tags:
+    - lab
+
+  variables:
+    CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
+    RUSTUP_HOME: "$CI_PROJECT_DIR/.rustup"
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+  cache:
+    key: "alpine:3.22"
+    paths:
+      - .cargo/registry/
+      - .cargo/git/
+      - .cargo/bin/
+      - .rustup/
+
+  before_script:
+    - apk update
+    - apk upgrade
+    - apk add --no-cache gcc musl-dev openssl-dev openssl-libs-static pkgconf git curl
+    - command -v cargo || curl https://sh.rustup.rs -sSf | sh -s -- -y
+    - source "$CARGO_HOME/env"
+
+  script:
+    - cargo build --release
+
+  artifacts:
+    paths:
+      - target/release/portctl
+    expire_in: 1 month
