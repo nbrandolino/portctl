@@ -139,8 +139,8 @@ pub fn pull(endpoint_id: u32, image: &str) {
     let client = PortainerClient::new_no_timeout();
 
     let (from_image, tag) = match image.rsplit_once(':') {
-        Some((name, tag)) => (name, tag),
-        None => (image, "latest"),
+        Some((name, tag)) if !tag.contains('/') => (name, tag),
+        _ => (image, "latest"),
     };
 
     let path = format!(

@@ -100,7 +100,7 @@ pub fn create(endpoint_id: u32, name: &str, driver: &str) {
 
 pub fn prune(endpoint_id: u32) {
     let client = PortainerClient::new();
-    let path = format!("endpoints/{}/docker/volumes/prune", endpoint_id);
+    let path = format!("endpoints/{}/docker/volumes/prune?filters=%7B%22all%22%3A%5B%22true%22%5D%7D", endpoint_id);
     match client.post(&path, serde_json::json!({})) {
         Ok(data) => {
             let reclaimed = data["SpaceReclaimed"].as_u64().unwrap_or(0);
