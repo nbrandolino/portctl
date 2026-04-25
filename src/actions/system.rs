@@ -52,7 +52,8 @@ pub fn prune(endpoint_filter: Option<&str>) {
             Err(e) => eprintln!("  Containers: failed ({})", e),
         }
 
-        let image_path = format!("endpoints/{}/docker/images/prune", eid);
+        // filters={"dangling":["false"]} prunes all unused images, not just untagged ones.
+        let image_path = format!("endpoints/{}/docker/images/prune?filters=%7B%22dangling%22%3A%5B%22false%22%5D%7D", eid);
         match client.post(&image_path, serde_json::json!({})) {
             Ok(data) => {
                 let count = data["ImagesDeleted"].as_array().map(|a| a.len()).unwrap_or(0);

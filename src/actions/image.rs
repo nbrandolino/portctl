@@ -173,7 +173,7 @@ pub fn remove(endpoint_id: u32, image: &str) {
 
 pub fn prune(endpoint_id: u32) {
     let client = PortainerClient::new();
-    let path = format!("endpoints/{}/docker/images/prune", endpoint_id);
+    let path = format!("endpoints/{}/docker/images/prune?filters=%7B%22dangling%22%3A%5B%22false%22%5D%7D", endpoint_id);
     match client.post(&path, serde_json::json!({})) {
         Ok(data) => {
             let reclaimed = data["SpaceReclaimed"].as_u64().unwrap_or(0);
