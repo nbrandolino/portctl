@@ -628,3 +628,430 @@ fn cli_system_prune_yes_flag() {
     let (_, csub_m) = sub_m.subcommand().unwrap();
     assert!(csub_m.get_flag("yes"));
 }
+
+// ── CLI: global flags ─────────────────────────────────────────────────────────
+
+#[test]
+fn cli_insecure_flag_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "--insecure", "config", "show"])
+        .unwrap();
+    assert!(m.get_flag("insecure"));
+}
+
+// ── CLI: stack (missing subcommands) ─────────────────────────────────────────
+
+#[test]
+fn cli_stack_start_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "stack", "start", "mystack"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "start");
+    assert_eq!(csub_m.get_one::<String>("name").unwrap(), "mystack");
+}
+
+#[test]
+fn cli_stack_start_requires_name() {
+    let result = build_cli().try_get_matches_from(["portctl", "stack", "start"]);
+    assert!(result.is_err());
+}
+
+#[test]
+fn cli_stack_update_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "stack", "update", "mystack"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "update");
+    assert_eq!(csub_m.get_one::<String>("name").unwrap(), "mystack");
+}
+
+#[test]
+fn cli_stack_compose_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "stack", "compose", "mystack"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "compose");
+    assert_eq!(csub_m.get_one::<String>("name").unwrap(), "mystack");
+}
+
+#[test]
+fn cli_stack_edit_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "stack", "edit", "mystack"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "edit");
+    assert_eq!(csub_m.get_one::<String>("name").unwrap(), "mystack");
+}
+
+#[test]
+fn cli_stack_inspect_requires_name() {
+    let result = build_cli().try_get_matches_from(["portctl", "stack", "inspect"]);
+    assert!(result.is_err());
+}
+
+#[test]
+fn cli_stack_stop_requires_name() {
+    let result = build_cli().try_get_matches_from(["portctl", "stack", "stop"]);
+    assert!(result.is_err());
+}
+
+#[test]
+fn cli_stack_rm_requires_name() {
+    let result = build_cli().try_get_matches_from(["portctl", "stack", "rm"]);
+    assert!(result.is_err());
+}
+
+#[test]
+fn cli_stack_deploy_env_file_with_file_source() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "stack", "deploy", "mystack", "-e", "ep",
+                               "-f", "./docker-compose.yml", "--env-file", ".env"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (_, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub_m.get_one::<String>("env-file").unwrap(), ".env");
+}
+
+#[test]
+fn cli_stack_deploy_env_file_with_git_source() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "stack", "deploy", "mystack", "-e", "ep",
+                               "--git-url", "https://github.com/foo/bar",
+                               "--env-file", "prod.env"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (_, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub_m.get_one::<String>("env-file").unwrap(), "prod.env");
+}
+
+#[test]
+fn cli_stack_deploy_custom_compose_file() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "stack", "deploy", "mystack", "-e", "ep",
+                               "--git-url", "https://github.com/foo/bar",
+                               "--compose-file", "infra/docker-compose.yml"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (_, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub_m.get_one::<String>("compose-file").unwrap(), "infra/docker-compose.yml");
+}
+
+// ── CLI: container (missing subcommands) ─────────────────────────────────────
+
+#[test]
+fn cli_container_stats_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "container", "stats", "-e", "ep", "abc123"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "stats");
+    assert_eq!(csub_m.get_one::<String>("id").unwrap(), "abc123");
+}
+
+#[test]
+fn cli_container_start_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "container", "start", "-e", "ep", "abc123"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "start");
+    assert_eq!(csub_m.get_one::<String>("id").unwrap(), "abc123");
+}
+
+#[test]
+fn cli_container_stop_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "container", "stop", "-e", "ep", "abc123"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "stop");
+    assert_eq!(csub_m.get_one::<String>("id").unwrap(), "abc123");
+}
+
+#[test]
+fn cli_container_stop_yes_flag() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "container", "stop", "-e", "ep", "abc123", "-y"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (_, csub_m) = sub_m.subcommand().unwrap();
+    assert!(csub_m.get_flag("yes"));
+}
+
+#[test]
+fn cli_container_restart_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "container", "restart", "-e", "ep", "abc123"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "restart");
+    assert_eq!(csub_m.get_one::<String>("id").unwrap(), "abc123");
+}
+
+#[test]
+fn cli_container_inspect_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "container", "inspect", "-e", "ep", "abc123"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "inspect");
+    assert_eq!(csub_m.get_one::<String>("id").unwrap(), "abc123");
+}
+
+#[test]
+fn cli_container_rm_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "container", "rm", "-e", "ep", "abc123"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "rm");
+    assert_eq!(csub_m.get_one::<String>("id").unwrap(), "abc123");
+}
+
+#[test]
+fn cli_container_rm_yes_flag() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "container", "rm", "-e", "ep", "abc123", "-y"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (_, csub_m) = sub_m.subcommand().unwrap();
+    assert!(csub_m.get_flag("yes"));
+}
+
+#[test]
+fn cli_container_pause_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "container", "pause", "-e", "ep", "abc123"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "pause");
+    assert_eq!(csub_m.get_one::<String>("id").unwrap(), "abc123");
+}
+
+#[test]
+fn cli_container_unpause_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "container", "unpause", "-e", "ep", "abc123"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "unpause");
+    assert_eq!(csub_m.get_one::<String>("id").unwrap(), "abc123");
+}
+
+#[test]
+fn cli_container_top_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "container", "top", "-e", "ep", "abc123"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "top");
+    assert_eq!(csub_m.get_one::<String>("id").unwrap(), "abc123");
+}
+
+#[test]
+fn cli_container_kill_yes_flag() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "container", "kill", "-e", "ep", "abc123", "-y"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (_, csub_m) = sub_m.subcommand().unwrap();
+    assert!(csub_m.get_flag("yes"));
+}
+
+#[test]
+fn cli_container_exec_requires_cmd() {
+    let result = build_cli()
+        .try_get_matches_from(["portctl", "container", "exec", "-e", "ep", "abc123"]);
+    assert!(result.is_err());
+}
+
+#[test]
+fn cli_container_ls_without_endpoint() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "container", "ls"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (_, csub_m) = sub_m.subcommand().unwrap();
+    assert!(csub_m.get_one::<String>("endpoint").is_none());
+}
+
+// ── CLI: image (missing subcommands) ─────────────────────────────────────────
+
+#[test]
+fn cli_image_pull_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "image", "pull", "-e", "ep", "nginx:latest"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "pull");
+    assert_eq!(csub_m.get_one::<String>("image").unwrap(), "nginx:latest");
+}
+
+#[test]
+fn cli_image_prune_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "image", "prune", "-e", "ep"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, _) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "prune");
+}
+
+#[test]
+fn cli_image_prune_yes_flag() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "image", "prune", "-e", "ep", "-y"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (_, csub_m) = sub_m.subcommand().unwrap();
+    assert!(csub_m.get_flag("yes"));
+}
+
+#[test]
+fn cli_image_rm_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "image", "rm", "-e", "ep", "nginx:latest"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "rm");
+    assert_eq!(csub_m.get_one::<String>("image").unwrap(), "nginx:latest");
+}
+
+// ── CLI: volume (missing subcommands) ────────────────────────────────────────
+
+#[test]
+fn cli_volume_inspect_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "volume", "inspect", "-e", "ep", "myvol"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "inspect");
+    assert_eq!(csub_m.get_one::<String>("name").unwrap(), "myvol");
+}
+
+#[test]
+fn cli_volume_rm_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "volume", "rm", "-e", "ep", "myvol"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "rm");
+    assert_eq!(csub_m.get_one::<String>("name").unwrap(), "myvol");
+}
+
+#[test]
+fn cli_volume_prune_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "volume", "prune", "-e", "ep"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, _) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "prune");
+}
+
+#[test]
+fn cli_volume_prune_yes_flag() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "volume", "prune", "-e", "ep", "-y"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (_, csub_m) = sub_m.subcommand().unwrap();
+    assert!(csub_m.get_flag("yes"));
+}
+
+// ── CLI: network (missing subcommands) ───────────────────────────────────────
+
+#[test]
+fn cli_network_inspect_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "network", "inspect", "-e", "ep", "mynet"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "inspect");
+    assert_eq!(csub_m.get_one::<String>("name").unwrap(), "mynet");
+}
+
+#[test]
+fn cli_network_rm_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "network", "rm", "-e", "ep", "mynet"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, csub_m) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "rm");
+    assert_eq!(csub_m.get_one::<String>("name").unwrap(), "mynet");
+}
+
+#[test]
+fn cli_network_prune_parses() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "network", "prune", "-e", "ep"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (csub, _) = sub_m.subcommand().unwrap();
+    assert_eq!(csub, "prune");
+}
+
+#[test]
+fn cli_network_prune_yes_flag() {
+    let m = build_cli()
+        .try_get_matches_from(["portctl", "network", "prune", "-e", "ep", "-y"])
+        .unwrap();
+    let (_, sub_m) = m.subcommand().unwrap();
+    let (_, csub_m) = sub_m.subcommand().unwrap();
+    assert!(csub_m.get_flag("yes"));
+}
+
+// ── Config (additional) ───────────────────────────────────────────────────────
+
+#[test]
+fn config_load_partial_toml_only_url() {
+    with_temp_home(|dir| {
+        let config_dir = dir.path().join(".config").join("portctl");
+        std::fs::create_dir_all(&config_dir).unwrap();
+        std::fs::write(
+            config_dir.join("config.toml"),
+            b"portainer_url = \"https://portainer.local\"\n",
+        ).unwrap();
+        let cfg = Config::load();
+        assert_eq!(cfg.portainer_url.as_deref(), Some("https://portainer.local"));
+        assert!(cfg.api_token.is_none());
+    });
+}
+
+#[test]
+fn config_load_partial_toml_only_token() {
+    with_temp_home(|dir| {
+        let config_dir = dir.path().join(".config").join("portctl");
+        std::fs::create_dir_all(&config_dir).unwrap();
+        std::fs::write(
+            config_dir.join("config.toml"),
+            b"api_token = \"mytoken\"\n",
+        ).unwrap();
+        let cfg = Config::load();
+        assert!(cfg.portainer_url.is_none());
+        assert_eq!(cfg.api_token.as_deref(), Some("mytoken"));
+    });
+}
