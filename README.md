@@ -36,6 +36,14 @@ portctl config show     # print current config
 portctl <SUBCOMMAND> [OPTIONS]
 ```
 
+### TLS verification
+By default, `portctl` verifies TLS certificates. Use `-k` / `--insecure` to skip verification (equivalent to `curl -k`):
+```bash
+portctl -k stack ls
+portctl --insecure container ls -e my-endpoint
+```
+This flag is global and can be placed before any subcommand.
+
 ### Confirmation prompts
 Destructive commands (`rm`, `prune`, `stop`, `kill`) prompt for confirmation before executing:
 ```
