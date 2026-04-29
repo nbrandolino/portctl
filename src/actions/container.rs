@@ -403,7 +403,7 @@ pub fn exec(endpoint_id: u32, container_id: &str, cmd: &[String]) {
         }
     };
     if exit_code != 0 {
-        std::process::exit(exit_code as i32);
+        std::process::exit(exit_code.clamp(1, 125) as i32);
     }
 }
 
