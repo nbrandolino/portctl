@@ -18,6 +18,9 @@ pub fn confirm(prompt: &str) -> bool {
     eprint!("{prompt} [y/N] ");
     io::stderr().flush().ok();
     let mut input = String::new();
-    io::stdin().read_line(&mut input).ok();
+    if let Err(e) = io::stdin().read_line(&mut input) {
+        eprintln!("Error: failed to read input: {e}");
+        std::process::exit(1);
+    }
     matches!(input.trim().to_lowercase().as_str(), "y" | "yes")
 }
