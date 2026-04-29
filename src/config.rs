@@ -26,7 +26,7 @@ impl Config {
 
     pub fn save(&self) {
         let path = config_path();
-        ensure_config_dir_exists(path.parent().unwrap());
+        ensure_config_dir_exists(path.parent().expect("config path has no parent directory"));
         let contents = toml::to_string(self).expect("Failed to serialize config");
         fs::write(&path, contents).expect("Failed to write config file");
     }
