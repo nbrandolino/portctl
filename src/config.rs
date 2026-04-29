@@ -26,9 +26,14 @@ impl Config {
 
     pub fn save(&self) {
         let path = config_path();
-        ensure_config_dir_exists(path.parent().expect("config path has no parent directory"));
-        let contents = toml::to_string(self).expect("Failed to serialize config");
-        fs::write(&path, contents).expect("Failed to write config file");
+        if let Some(dir) = path.parent() {
+            ensure_config_dir_exists(dir);
+        }
+        let contents = toml::to_string(self).unwrap_or_default();
+        if let Err(e) = fs::write(&path, contents) {
+            eprintln!("Error: failed to write config file '{}': {e}", path.display());
+            std::process::exit(1);
+        }
     }
 
     pub fn set_url(&mut self, url: String) {
