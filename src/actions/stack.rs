@@ -246,7 +246,9 @@ pub fn update(stack_name: &str) {
     let path = format!("stacks/{}/git/redeploy?endpointId={}", id, endpoint_id);
     let body = serde_json::json!({ "pullImage": true });
 
-    match client.put(&path, body) {
+    // Image pulls and redeployment can take arbitrarily long, so use no timeout.
+    let deploy_client = PortainerClient::new_no_timeout();
+    match deploy_client.put(&path, body) {
         Ok(_) => println!("Stack {stack_name} pulled and redeployed."),
         Err(e) => {
             eprintln!("Failed to update stack: {e}");
