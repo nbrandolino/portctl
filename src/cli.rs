@@ -7,6 +7,14 @@ pub fn build_cli() -> clap::Command {
         .about("A command-line utility designed to manage Docker environments through the Portainer API")
         .subcommand_required(true)
         .arg_required_else_help(true)
+        .arg(
+            clap::Arg::new("insecure")
+                .short('k')
+                .long("insecure")
+                .action(clap::ArgAction::SetTrue)
+                .global(true)
+                .help("Skip TLS certificate verification (unsafe)"),
+        )
         .subcommand(
             clap::Command::new("config")
                 .about("Manage portctl configuration")

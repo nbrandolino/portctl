@@ -55,6 +55,9 @@ impl PortainerClient {
         if let Some(t) = timeout {
             builder = builder.timeout(t);
         }
+        if std::env::var("PORTCTL_INSECURE").is_ok() {
+            builder = builder.danger_accept_invalid_certs(true);
+        }
         let client = builder.build().unwrap_or_else(|e| {
             eprintln!("Error: Failed to build HTTP client: {e}");
             std::process::exit(1);
