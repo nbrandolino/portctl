@@ -10,8 +10,13 @@ pub struct Config {
 }
 
 fn config_path() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(home).join(".config").join("portctl").join("config.toml")
+    match std::env::var("HOME") {
+        Ok(home) => PathBuf::from(home).join(".config").join("portctl").join("config.toml"),
+        Err(_) => {
+            eprintln!("Error: $HOME is not set; cannot determine config file location");
+            std::process::exit(1);
+        }
+    }
 }
 
 impl Config {
