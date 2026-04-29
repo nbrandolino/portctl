@@ -20,7 +20,7 @@ pub fn prune(endpoint_filter: Option<&str>) {
     } else {
         match client.get("endpoints") {
             Ok(data) => data.as_array().unwrap_or(&vec![]).iter().filter_map(|ep| {
-                let id = ep["Id"].as_u64()? as u32;
+                let id = u32::try_from(ep["Id"].as_u64()?).ok()?;
                 let name = ep["Name"].as_str().unwrap_or("(unknown)").to_string();
                 Some((id, name))
             }).collect(),

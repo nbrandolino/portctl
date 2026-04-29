@@ -15,7 +15,7 @@ pub fn resolve_id(name: &str) -> u32 {
                 .iter()
                 .find(|ep| ep["Name"].as_str().unwrap_or("") == name)
                 .and_then(|ep| ep["Id"].as_u64())
-                .map(|id| id as u32)
+                .and_then(|id| u32::try_from(id).ok())
                 .unwrap_or_else(|| {
                     eprintln!("Error: no endpoint named '{name}' found. Run `portctl endpoint ls` to see available endpoints.");
                     std::process::exit(1);

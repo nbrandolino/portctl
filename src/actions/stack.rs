@@ -15,7 +15,7 @@ pub fn resolve_id(name: &str) -> u32 {
                 .iter()
                 .find(|s| s["Name"].as_str().unwrap_or("") == name)
                 .and_then(|s| s["Id"].as_u64())
-                .map(|id| id as u32)
+                .and_then(|id| u32::try_from(id).ok())
                 .unwrap_or_else(|| {
                     eprintln!("Error: no stack named '{name}' found. Run `portctl stack ls` to see available stacks.");
                     std::process::exit(1);
@@ -57,7 +57,7 @@ pub fn list(endpoint_filter: Option<&str>) {
     } else {
         match client.get("endpoints") {
             Ok(data) => data.as_array().unwrap_or(&vec![]).iter().filter_map(|ep| {
-                let id = ep["Id"].as_u64()? as u32;
+                let id = u32::try_from(ep["Id"].as_u64()?).ok()?;
                 let name = ep["Name"].as_str().unwrap_or("").to_string();
                 Some((id, name))
             }).collect(),

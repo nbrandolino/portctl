@@ -37,7 +37,7 @@ fn list_all() {
     println!("{}", "-".repeat(90));
 
     let total: usize = endpoints.iter().filter_map(|ep| {
-        let eid = ep["Id"].as_u64()? as u32;
+        let eid = u32::try_from(ep["Id"].as_u64()?).ok()?;
         let ep_name = ep["Name"].as_str().unwrap_or("(unknown)").to_string();
         Some(list_for_endpoint(&client, eid, Some(&ep_name)))
     }).sum();
