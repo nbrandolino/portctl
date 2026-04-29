@@ -89,8 +89,26 @@ fn main() {
             Some(("deploy", args)) => {
                 let name = args.get_one::<String>("name").unwrap();
                 let endpoint = args.get_one::<String>("endpoint").unwrap();
+                let env_vars = if let Some(env_path) = args.get_one::<String>("env-file") {
+                    let raw = match std::fs::read_to_string(env_path) {
+                        Ok(s) => s,
+                        Err(e) => {
+                            eprintln!("Error: failed to read env file '{env_path}': {e}");
+                            std::process::exit(1);
+                        }
+                    };
+                    raw.lines()
+                        .filter(|l| !l.trim().is_empty() && !l.trim_start().starts_with('#'))
+                        .filter_map(|l| {
+                            let (k, v) = l.split_once('=')?;
+                            Some((k.trim().to_string(), v.trim().to_string()))
+                        })
+                        .collect::<Vec<_>>()
+                } else {
+                    vec![]
+                };
                 if let Some(file) = args.get_one::<String>("file") {
-                    stack::deploy_from_file(name, endpoint, file);
+                    stack::deploy_from_file(name, endpoint, file, &env_vars);
                 } else {
                     let git_url = args.get_one::<String>("git-url").unwrap();
                     let git_ref = args.get_one::<String>("git-ref").unwrap();
@@ -102,7 +120,7 @@ fn main() {
                         (Some(u), Some(p)) => Some((u.as_str(), p.as_str())),
                         _ => None,
                     };
-                    stack::deploy_from_git(name, endpoint, git_url, git_ref, compose_file, credentials);
+                    stack::deploy_from_git(name, endpoint, git_url, git_ref, compose_file, credentials, &env_vars);
                 }
             }
             Some(("compose", args)) => {

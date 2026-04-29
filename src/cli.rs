@@ -165,6 +165,12 @@ pub fn build_cli() -> clap::Command {
                                 .requires("git-username")
                                 .help("Password or personal access token for private repository authentication"),
                         )
+                        .arg(
+                            clap::Arg::new("env-file")
+                                .long("env-file")
+                                .value_name("PATH")
+                                .help("Path to an env file (KEY=VALUE lines) to pass as stack environment variables"),
+                        )
                         .group(
                             clap::ArgGroup::new("source")
                                 .args(["file", "git-url"])

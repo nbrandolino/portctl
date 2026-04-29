@@ -257,7 +257,7 @@ pub fn update(stack_name: &str) {
     }
 }
 
-pub fn deploy_from_file(name: &str, endpoint_name: &str, file_path: &str) {
+pub fn deploy_from_file(name: &str, endpoint_name: &str, file_path: &str, env_vars: &[(String, String)]) {
     let content = match std::fs::read_to_string(file_path) {
         Ok(c) => c,
         Err(e) => {
@@ -269,9 +269,13 @@ pub fn deploy_from_file(name: &str, endpoint_name: &str, file_path: &str) {
     let eid = crate::actions::endpoint::resolve_id(endpoint_name);
     let client = PortainerClient::new();
     let path = format!("stacks?type=2&method=string&endpointId={}", eid);
+    let env: Vec<serde_json::Value> = env_vars.iter()
+        .map(|(k, v)| serde_json::json!({"name": k, "value": v}))
+        .collect();
     let body = serde_json::json!({
         "Name": name,
         "StackFileContent": content,
+        "Env": env,
     });
 
     match client.post(&path, body) {
@@ -290,10 +294,15 @@ pub fn deploy_from_git(
     git_ref: &str,
     compose_file: &str,
     credentials: Option<(&str, &str)>,
+    env_vars: &[(String, String)],
 ) {
     let eid = crate::actions::endpoint::resolve_id(endpoint_name);
     let client = PortainerClient::new();
     let path = format!("stacks?type=2&method=repository&endpointId={}", eid);
+
+    let env: Vec<serde_json::Value> = env_vars.iter()
+        .map(|(k, v)| serde_json::json!({"name": k, "value": v}))
+        .collect();
 
     let mut body = serde_json::json!({
         "Name": name,
@@ -301,6 +310,7 @@ pub fn deploy_from_git(
         "RepositoryReferenceName": git_ref,
         "ComposeFile": compose_file,
         "RepositoryAuthentication": credentials.is_some(),
+        "Env": env,
     });
 
     if let Some((username, password)) = credentials {
