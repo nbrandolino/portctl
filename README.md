@@ -88,14 +88,22 @@ Manage stacks on a Portainer endpoint.
 |---|---|
 | `stack ls [-e NAME]` | List all stacks (optionally filter by endpoint) |
 | `stack inspect <NAME>` | Show detailed information about a stack |
-| `stack deploy <NAME> -e <ENDPOINT> -f <FILE>` | Deploy a new stack from a local compose file |
-| `stack deploy <NAME> -e <ENDPOINT> --git-url <URL>` | Deploy a new stack from a git repository |
+| `stack deploy <NAME> -e <ENDPOINT> -f <FILE> [--env-file <PATH>]` | Deploy a new stack from a local compose file |
+| `stack deploy <NAME> -e <ENDPOINT> --git-url <URL> [--env-file <PATH>]` | Deploy a new stack from a git repository |
 | `stack compose <NAME>` | Print the compose file of a stack |
 | `stack edit <NAME>` | Open a stack's compose file in an editor and redeploy on save |
 | `stack start <NAME>` | Start a stack |
 | `stack stop <NAME>` | Stop a stack |
 | `stack update <NAME>` | Pull latest git changes and redeploy a stack |
 | `stack rm <NAME>` | Remove a stack |
+
+#### Deploying from a local file
+```bash
+portctl stack deploy mystack -e my-endpoint -f docker-compose.yml
+
+# With environment variables
+portctl stack deploy mystack -e my-endpoint -f docker-compose.yml --env-file .env
+```
 
 #### Deploying from a git repository
 ```bash
@@ -114,6 +122,11 @@ portctl stack deploy mystack -e my-endpoint \
   --git-url https://github.com/user/private-repo \
   --git-username myuser \
   --git-password ghp_xxxxxxxxxxxx
+
+# With environment variables
+portctl stack deploy mystack -e my-endpoint \
+  --git-url https://github.com/user/repo \
+  --env-file .env
 ```
 
 #### stack edit
