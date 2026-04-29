@@ -125,6 +125,11 @@ pub fn logs(endpoint_id: u32, container_id: &str, tail: u32, timestamps: bool, f
         }
 
         let payload_len = u32::from_be_bytes([header[4], header[5], header[6], header[7]]) as usize;
+        const MAX_PAYLOAD: usize = 100 * 1024 * 1024; // 100 MB
+        if payload_len > MAX_PAYLOAD {
+            eprintln!("Error: log stream payload too large ({payload_len} bytes), aborting.");
+            std::process::exit(1);
+        }
         let mut payload = vec![0u8; payload_len];
 
         match stream.read_exact(&mut payload) {
@@ -362,6 +367,11 @@ pub fn exec(endpoint_id: u32, container_id: &str, cmd: &[String]) {
         }
 
         let payload_len = u32::from_be_bytes([header[4], header[5], header[6], header[7]]) as usize;
+        const MAX_PAYLOAD: usize = 100 * 1024 * 1024; // 100 MB
+        if payload_len > MAX_PAYLOAD {
+            eprintln!("Error: exec stream payload too large ({payload_len} bytes), aborting.");
+            std::process::exit(1);
+        }
         let mut payload = vec![0u8; payload_len];
 
         match stream.read_exact(&mut payload) {
