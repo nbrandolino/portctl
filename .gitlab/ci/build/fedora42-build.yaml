@@ -1,6 +1,0 @@
-fedora42-build:
-  extends: .rpm_build_template
-  image: fedora:42
-  stage: package
-  tags:
-    - lab

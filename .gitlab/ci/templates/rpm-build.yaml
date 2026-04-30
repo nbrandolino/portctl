@@ -15,9 +15,9 @@
       - .rustup/
 
   before_script:
-    - 'dnf upgrade -y && dnf install epel-release -y || true'
+    - '. /etc/os-release; [ "$ID" != "fedora" ] && dnf install -y epel-release'
     - dnf install -y gcc gcc-c++ rpm-build rpmdevtools openssl-devel pkgconf-pkg-config git tar gzip
-    - command -v cargo || curl https://sh.rustup.rs -sSf | sh -s -- -y
+    - command -v cargo || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
     - source "$CARGO_HOME/env"
     - command -v cargo-generate-rpm || cargo install cargo-generate-rpm
 

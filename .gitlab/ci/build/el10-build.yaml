@@ -1,6 +1,6 @@
 el10-build:
   extends: .rpm_build_template
   image: rockylinux/rockylinux:10
-  stage: package
+  stage: build
   tags:
     - lab
