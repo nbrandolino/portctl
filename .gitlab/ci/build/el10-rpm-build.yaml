@@ -1,6 +1,6 @@
-fedora43-build:
+el10-rpm-build:
   extends: .rpm_build_template
-  image: fedora:43
+  image: rockylinux/rockylinux:10
   stage: build
   tags:
     - lab

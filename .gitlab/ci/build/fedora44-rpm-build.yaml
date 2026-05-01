@@ -1,4 +1,4 @@
-fedora44-build:
+fedora44-rpm-build:
   extends: .rpm_build_template
   image: fedora:44
   stage: build
