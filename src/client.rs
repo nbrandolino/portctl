@@ -2,6 +2,17 @@ use crate::config::Config;
 use reqwest::blocking::Client;
 use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
 use serde_json::Value;
+use std::sync::OnceLock;
+
+static INSECURE: OnceLock<bool> = OnceLock::new();
+
+pub fn set_insecure(value: bool) {
+    let _ = INSECURE.set(value);
+}
+
+fn is_insecure() -> bool {
+    *INSECURE.get().unwrap_or(&false)
+}
 
 fn api_error(status: reqwest::StatusCode, url: &str, body: String) -> String {
     let detail = if !body.is_empty() {
@@ -55,7 +66,7 @@ impl PortainerClient {
         if let Some(t) = timeout {
             builder = builder.timeout(t);
         }
-        if std::env::var("PORTCTL_INSECURE").is_ok() {
+        if is_insecure() {
             builder = builder.danger_accept_invalid_certs(true);
         }
         let client = builder.build().unwrap_or_else(|e| {

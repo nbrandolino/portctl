@@ -14,7 +14,7 @@ fn main() {
     let matches = cli::build_cli().get_matches();
 
     if matches.get_flag("insecure") {
-        std::env::set_var("PORTCTL_INSECURE", "1");
+        portctl::client::set_insecure(true);
     }
 
     match matches.subcommand() {
