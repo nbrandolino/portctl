@@ -483,6 +483,79 @@ pub fn build_cli() -> clap::Command {
                         ),
                 )
                 .subcommand(
+                    clap::Command::new("run")
+                        .about("Create and start a new container")
+                        .arg(
+                            clap::Arg::new("image")
+                                .required(true)
+                                .value_name("IMAGE")
+                                .help("Image to run (e.g. nginx:latest)"),
+                        )
+                        .arg(endpoint_arg())
+                        .arg(
+                            clap::Arg::new("name")
+                                .long("name")
+                                .value_name("NAME")
+                                .help("Container name"),
+                        )
+                        .arg(
+                            clap::Arg::new("env")
+                                .long("env")
+                                .value_name("KEY=VALUE")
+                                .action(clap::ArgAction::Append)
+                                .help("Set an environment variable (repeatable)"),
+                        )
+                        .arg(
+                            clap::Arg::new("publish")
+                                .short('p')
+                                .long("publish")
+                                .value_name("HOST:CONTAINER[/PROTO]")
+                                .action(clap::ArgAction::Append)
+                                .help("Publish a port (e.g. -p 8080:80, -p 8080:80/udp)"),
+                        )
+                        .arg(
+                            clap::Arg::new("volume")
+                                .short('v')
+                                .long("volume")
+                                .value_name("HOST:CONTAINER[:OPTIONS]")
+                                .action(clap::ArgAction::Append)
+                                .help("Bind-mount a volume (e.g. -v /data:/data:ro)"),
+                        )
+                        .arg(
+                            clap::Arg::new("network")
+                                .long("network")
+                                .value_name("NETWORK")
+                                .help("Connect to a network"),
+                        )
+                        .arg(
+                            clap::Arg::new("restart")
+                                .long("restart")
+                                .value_name("POLICY")
+                                .default_value("no")
+                                .help("Restart policy (no, always, on-failure, unless-stopped)"),
+                        )
+                        .arg(
+                            clap::Arg::new("detach")
+                                .short('d')
+                                .long("detach")
+                                .action(clap::ArgAction::SetTrue)
+                                .help("Run container in the background and print its ID"),
+                        )
+                        .arg(
+                            clap::Arg::new("rm")
+                                .long("rm")
+                                .action(clap::ArgAction::SetTrue)
+                                .help("Automatically remove the container when it exits"),
+                        )
+                        .arg(
+                            clap::Arg::new("cmd")
+                                .num_args(1..)
+                                .last(true)
+                                .value_name("CMD")
+                                .help("Command override (use -- to separate from portctl args)"),
+                        ),
+                )
+                .subcommand(
                     clap::Command::new("exec")
                         .about("Run a command inside a container")
                         .arg(endpoint_arg())

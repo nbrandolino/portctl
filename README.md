@@ -182,6 +182,7 @@ Manage containers on a Portainer endpoint.
 
 | Command | Description |
 |---|---|
+| `container run -e <ENDPOINT> <IMAGE> [OPTIONS] [-- CMD]` | Create and start a new container |
 | `container ls [-e ENDPOINT]` | List all containers (optionally filter by endpoint) |
 | `container inspect -e <ENDPOINT> <CONTAINER>` | Show detailed information about a container |
 | `container stats -e <ENDPOINT> <CONTAINER>` | Show CPU, memory, network, and block I/O usage |
@@ -198,6 +199,30 @@ Manage containers on a Portainer endpoint.
 | `container cp -e <ENDPOINT> <SRC> <DEST>` | Copy files between a container and the local filesystem |
 | `container rm -e <ENDPOINT> <CONTAINER>` | Remove a container |
 | `container prune -e <ENDPOINT>` | Remove all stopped containers |
+
+#### container run
+```bash
+# Foreground (streams logs until the container exits)
+portctl container run -e my-endpoint nginx:latest
+
+# Detached
+portctl container run -e my-endpoint -d --name myapp nginx:latest
+
+# With ports, volumes, and environment variables
+portctl container run -e my-endpoint \
+  --name myapp \
+  -p 8080:80 \
+  -p 443:443/tcp \
+  -v /data:/app/data:ro \
+  --env APP_ENV=production \
+  --env DB_HOST=db \
+  --network mynet \
+  --restart unless-stopped \
+  myimage:latest
+
+# Auto-remove on exit with a command override
+portctl container run -e my-endpoint --rm alpine:latest -- sh -c "echo hello"
+```
 
 #### container logs options
 ```bash

@@ -341,6 +341,20 @@ fn main() {
                 let new_name = args.get_one::<String>("new-name").unwrap();
                 container::rename(eid, &cid, new_name);
             }
+            Some(("run", args)) => {
+                let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
+                let image = args.get_one::<String>("image").unwrap();
+                let name = args.get_one::<String>("name").map(|s| s.as_str());
+                let env_vars: Vec<String> = args.get_many::<String>("env").map(|v| v.cloned().collect()).unwrap_or_default();
+                let port_bindings: Vec<String> = args.get_many::<String>("publish").map(|v| v.cloned().collect()).unwrap_or_default();
+                let volumes: Vec<String> = args.get_many::<String>("volume").map(|v| v.cloned().collect()).unwrap_or_default();
+                let network = args.get_one::<String>("network").map(|s| s.as_str());
+                let restart = args.get_one::<String>("restart").unwrap();
+                let detach = args.get_flag("detach");
+                let auto_remove = args.get_flag("rm");
+                let cmd: Option<Vec<String>> = args.get_many::<String>("cmd").map(|v| v.cloned().collect());
+                container::run(eid, image, name, &env_vars, &port_bindings, &volumes, network, restart, detach, auto_remove, cmd.as_deref());
+            }
             Some(("exec", args)) => {
                 let eid = endpoint::resolve_id(args.get_one::<String>("endpoint").unwrap());
                 let cid = args.get_one::<String>("id").unwrap().clone();

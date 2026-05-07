@@ -582,6 +582,122 @@ pub fn prune(endpoint_id: u32) {
     }
 }
 
+pub fn run(
+    endpoint_id: u32,
+    image: &str,
+    name: Option<&str>,
+    env_vars: &[String],
+    port_bindings: &[String],
+    volumes: &[String],
+    network: Option<&str>,
+    restart_policy: &str,
+    detach: bool,
+    auto_remove: bool,
+    cmd: Option<&[String]>,
+) {
+    let client = PortainerClient::new_no_timeout();
+
+    let mut body = serde_json::json!({ "Image": image });
+
+    if !env_vars.is_empty() {
+        body["Env"] = serde_json::json!(env_vars);
+    }
+
+    if let Some(c) = cmd {
+        if !c.is_empty() {
+            body["Cmd"] = serde_json::json!(c);
+        }
+    }
+
+    let mut host_config = serde_json::json!({
+        "RestartPolicy": {
+            "Name": restart_policy,
+            "MaximumRetryCount": if restart_policy == "on-failure" { 3 } else { 0 }
+        },
+        "AutoRemove": auto_remove,
+    });
+
+    if !volumes.is_empty() {
+        host_config["Binds"] = serde_json::json!(volumes);
+    }
+
+    if let Some(net) = network {
+        host_config["NetworkMode"] = serde_json::json!(net);
+    }
+
+    if !port_bindings.is_empty() {
+        let mut exposed_ports = serde_json::Map::new();
+        let mut bindings_map = serde_json::Map::new();
+
+        for pb in port_bindings {
+            let (host_port, container_part) = if let Some((h, c)) = pb.split_once(':') {
+                (h, c)
+            } else {
+                ("", pb.as_str())
+            };
+            let (container_port, proto) = if let Some((cp, pr)) = container_part.split_once('/') {
+                (cp, pr)
+            } else {
+                (container_part, "tcp")
+            };
+            let key = format!("{}/{}", container_port, proto);
+            exposed_ports.insert(key.clone(), serde_json::json!({}));
+            bindings_map.insert(key, serde_json::json!([{ "HostIp": "", "HostPort": host_port }]));
+        }
+
+        body["ExposedPorts"] = serde_json::Value::Object(exposed_ports);
+        host_config["PortBindings"] = serde_json::Value::Object(bindings_map);
+    }
+
+    body["HostConfig"] = host_config;
+
+    let create_path = if let Some(n) = name {
+        format!("endpoints/{}/docker/containers/create?name={}", endpoint_id, encode(n))
+    } else {
+        format!("endpoints/{}/docker/containers/create", endpoint_id)
+    };
+
+    let container_id = match client.post(&create_path, body) {
+        Ok(data) => match data["Id"].as_str() {
+            Some(id) => id.to_string(),
+            None => {
+                eprintln!("Failed to get container ID from response.");
+                std::process::exit(1);
+            }
+        },
+        Err(e) => {
+            eprintln!("Failed to create container: {e}");
+            std::process::exit(1);
+        }
+    };
+
+    let start_path = format!("endpoints/{}/docker/containers/{}/start", endpoint_id, container_id);
+    if let Err(e) = client.post_empty(&start_path) {
+        eprintln!("Failed to start container: {e}");
+        std::process::exit(1);
+    }
+
+    if detach {
+        println!("{}", &container_id[..container_id.len().min(12)]);
+        return;
+    }
+
+    let short_id = container_id.chars().take(12).collect::<String>();
+    eprintln!("Container {} started.", name.unwrap_or(&short_id));
+
+    let log_path = format!(
+        "endpoints/{}/docker/containers/{}/logs?stdout=1&stderr=1&tail=0&follow=1",
+        endpoint_id, container_id
+    );
+    match client.get_response(&log_path) {
+        Ok(response) => crate::utils::pipe_docker_stream(response),
+        Err(e) => {
+            eprintln!("Failed to stream logs: {e}");
+            std::process::exit(1);
+        }
+    }
+}
+
 pub fn remove(endpoint_id: u32, container_id: &str) {
     let client = PortainerClient::new();
     let path = format!("endpoints/{}/docker/containers/{}", endpoint_id, encode(container_id));
