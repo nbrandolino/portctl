@@ -141,7 +141,12 @@ pub fn logs(endpoint_id: u32, container_id: &str, tail: u32, timestamps: bool, f
             }
         }
 
-        if let Ok(text) = std::str::from_utf8(&payload) {
+        let stream_type = header[0];
+        if stream_type == 2 {
+            if let Ok(text) = std::str::from_utf8(&payload) {
+                eprint!("{}", text);
+            }
+        } else if let Ok(text) = std::str::from_utf8(&payload) {
             print!("{}", text);
         }
     }
