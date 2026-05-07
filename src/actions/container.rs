@@ -85,8 +85,6 @@ fn list_for_endpoint(client: &PortainerClient, endpoint_id: u32, endpoint_name: 
 }
 
 pub fn logs(endpoint_id: u32, container_id: &str, tail: u32, timestamps: bool, follow: bool) {
-    use std::io::Read;
-
     let client = if follow {
         PortainerClient::new_no_timeout()
     } else {
@@ -107,49 +105,7 @@ pub fn logs(endpoint_id: u32, container_id: &str, tail: u32, timestamps: bool, f
         }
     };
 
-    // Docker multiplexes stdout/stderr into a single stream with an 8-byte header per chunk:
-    //   byte 0:   stream type (1 = stdout, 2 = stderr)
-    //   bytes 1-3: padding (zeros)
-    //   bytes 4-7: payload length (big-endian u32)
-    let mut stream = response;
-    let mut header = [0u8; 8];
-
-    loop {
-        match stream.read_exact(&mut header) {
-            Ok(()) => {}
-            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
-            Err(e) => {
-                eprintln!("Error reading log stream: {e}");
-                std::process::exit(1);
-            }
-        }
-
-        let payload_len = u32::from_be_bytes([header[4], header[5], header[6], header[7]]) as usize;
-        const MAX_PAYLOAD: usize = 100 * 1024 * 1024; // 100 MB
-        if payload_len > MAX_PAYLOAD {
-            eprintln!("Error: log stream payload too large ({payload_len} bytes), aborting.");
-            std::process::exit(1);
-        }
-        let mut payload = vec![0u8; payload_len];
-
-        match stream.read_exact(&mut payload) {
-            Ok(()) => {}
-            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
-            Err(e) => {
-                eprintln!("Error reading log stream: {e}");
-                std::process::exit(1);
-            }
-        }
-
-        let stream_type = header[0];
-        if stream_type == 2 {
-            if let Ok(text) = std::str::from_utf8(&payload) {
-                eprint!("{}", text);
-            }
-        } else if let Ok(text) = std::str::from_utf8(&payload) {
-            print!("{}", text);
-        }
-    }
+    crate::utils::pipe_docker_stream(response);
 }
 
 pub fn stats(endpoint_id: u32, container_id: &str) {
@@ -319,8 +275,6 @@ pub fn inspect(endpoint_id: u32, container_id: &str) {
 }
 
 pub fn exec(endpoint_id: u32, container_id: &str, cmd: &[String]) {
-    use std::io::Read;
-
     let client = PortainerClient::new_no_timeout();
 
     // Step 1: create the exec instance
@@ -351,7 +305,7 @@ pub fn exec(endpoint_id: u32, container_id: &str, cmd: &[String]) {
     let start_path = format!("endpoints/{}/docker/exec/{}/start", endpoint_id, exec_id);
     let start_body = serde_json::json!({ "Detach": false, "Tty": false });
 
-    let mut stream = match client.post_response(&start_path, start_body) {
+    let stream = match client.post_response(&start_path, start_body) {
         Ok(r) => r,
         Err(e) => {
             eprintln!("Failed to start exec: {e}");
@@ -359,44 +313,7 @@ pub fn exec(endpoint_id: u32, container_id: &str, cmd: &[String]) {
         }
     };
 
-    // Same multiplexed stream format as container logs
-    let mut header = [0u8; 8];
-    loop {
-        match stream.read_exact(&mut header) {
-            Ok(()) => {}
-            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
-            Err(e) => {
-                eprintln!("Error reading exec stream: {e}");
-                std::process::exit(1);
-            }
-        }
-
-        let payload_len = u32::from_be_bytes([header[4], header[5], header[6], header[7]]) as usize;
-        const MAX_PAYLOAD: usize = 100 * 1024 * 1024; // 100 MB
-        if payload_len > MAX_PAYLOAD {
-            eprintln!("Error: exec stream payload too large ({payload_len} bytes), aborting.");
-            std::process::exit(1);
-        }
-        let mut payload = vec![0u8; payload_len];
-
-        match stream.read_exact(&mut payload) {
-            Ok(()) => {}
-            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
-            Err(e) => {
-                eprintln!("Error reading exec stream: {e}");
-                std::process::exit(1);
-            }
-        }
-
-        let stream_type = header[0];
-        if stream_type == 2 {
-            if let Ok(text) = std::str::from_utf8(&payload) {
-                eprint!("{}", text);
-            }
-        } else if let Ok(text) = std::str::from_utf8(&payload) {
-            print!("{}", text);
-        }
-    }
+    crate::utils::pipe_docker_stream(stream);
 
     // Step 3: retrieve the exit code and propagate it
     let inspect_path = format!("endpoints/{}/docker/exec/{}/json", endpoint_id, exec_id);
