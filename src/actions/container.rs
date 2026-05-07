@@ -2,6 +2,43 @@ use crate::client::PortainerClient;
 use urlencoding::encode;
 
 pub fn list(endpoint_filter: Option<&str>) {
+    if crate::utils::json_output() {
+        let client = PortainerClient::new();
+        if let Some(name) = endpoint_filter {
+            let eid = crate::actions::endpoint::resolve_id(name);
+            let path = format!("endpoints/{}/docker/containers/json?all=1", eid);
+            match client.get(&path) {
+                Ok(data) => crate::utils::print_json(&data),
+                Err(e) => { eprintln!("Failed to list containers: {e}"); std::process::exit(1); }
+            }
+        } else {
+            let endpoints = match client.get("endpoints") {
+                Ok(d) => d.as_array().cloned().unwrap_or_default(),
+                Err(e) => { eprintln!("Failed to fetch endpoints: {e}"); std::process::exit(1); }
+            };
+            let mut all: Vec<serde_json::Value> = vec![];
+            for ep in &endpoints {
+                let eid = match ep["Id"].as_u64().and_then(|id| u32::try_from(id).ok()) {
+                    Some(id) => id,
+                    None => continue,
+                };
+                let ep_name = ep["Name"].as_str().unwrap_or("(unknown)");
+                let path = format!("endpoints/{}/docker/containers/json?all=1", eid);
+                if let Ok(data) = client.get(&path) {
+                    if let Some(arr) = data.as_array() {
+                        for c in arr {
+                            let mut obj = c.clone();
+                            obj["Endpoint"] = serde_json::json!(ep_name);
+                            all.push(obj);
+                        }
+                    }
+                }
+            }
+            crate::utils::print_json(&serde_json::json!(all));
+        }
+        return;
+    }
+
     if let Some(name) = endpoint_filter {
         let client = PortainerClient::new();
         let eid = crate::actions::endpoint::resolve_id(name);
@@ -113,6 +150,10 @@ pub fn stats(endpoint_id: u32, container_id: &str) {
     let path = format!("endpoints/{}/docker/containers/{}/stats?stream=false", endpoint_id, encode(container_id));
     match client.get(&path) {
         Ok(data) => {
+            if crate::utils::json_output() {
+                crate::utils::print_json(&data);
+                return;
+            }
             let cpu_delta = data["cpu_stats"]["cpu_usage"]["total_usage"].as_u64().unwrap_or(0)
                 .saturating_sub(data["precpu_stats"]["cpu_usage"]["total_usage"].as_u64().unwrap_or(0));
             let system_delta = data["cpu_stats"]["system_cpu_usage"].as_u64().unwrap_or(0)
@@ -227,6 +268,10 @@ pub fn inspect(endpoint_id: u32, container_id: &str) {
     let path = format!("endpoints/{}/docker/containers/{}/json", endpoint_id, encode(container_id));
     match client.get(&path) {
         Ok(data) => {
+            if crate::utils::json_output() {
+                crate::utils::print_json(&data);
+                return;
+            }
             let id = data["Id"].as_str().unwrap_or("(unknown)").chars().take(12).collect::<String>();
             let name = data["Name"].as_str().unwrap_or("(unknown)").trim_start_matches('/');
             let image = data["Config"]["Image"].as_str().unwrap_or("(unknown)");
@@ -476,6 +521,10 @@ pub fn top(endpoint_id: u32, container_id: &str) {
     let path = format!("endpoints/{}/docker/containers/{}/top", endpoint_id, encode(container_id));
     match client.get(&path) {
         Ok(data) => {
+            if crate::utils::json_output() {
+                crate::utils::print_json(&data);
+                return;
+            }
             let titles = data["Titles"]
                 .as_array()
                 .map(|a| a.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>())

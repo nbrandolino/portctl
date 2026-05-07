@@ -15,6 +15,13 @@ pub fn build_cli() -> clap::Command {
                 .global(true)
                 .help("Skip TLS certificate verification (unsafe)"),
         )
+        .arg(
+            clap::Arg::new("json")
+                .long("json")
+                .action(clap::ArgAction::SetTrue)
+                .global(true)
+                .help("Output raw JSON instead of formatted tables"),
+        )
         .subcommand(
             clap::Command::new("config")
                 .about("Manage portctl configuration")

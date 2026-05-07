@@ -34,6 +34,10 @@ pub fn inspect(name: &str) {
     let path = format!("endpoints/{}", id);
     match client.get(&path) {
         Ok(ep) => {
+            if crate::utils::json_output() {
+                crate::utils::print_json(&ep);
+                return;
+            }
             let ep_type = match ep["Type"].as_u64().unwrap_or(0) {
                 1 => "Docker",
                 2 => "Agent",
@@ -79,6 +83,11 @@ pub fn list() {
     let client = PortainerClient::new();
     match client.get("endpoints") {
         Ok(data) => {
+            if crate::utils::json_output() {
+                crate::utils::print_json(&data);
+                return;
+            }
+
             let endpoints = match data.as_array() {
                 Some(arr) => arr,
                 None => {

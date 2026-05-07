@@ -16,6 +16,9 @@ fn main() {
     if matches.get_flag("insecure") {
         portctl::client::set_insecure(true);
     }
+    if matches.get_flag("json") {
+        portctl::utils::set_json_output(true);
+    }
 
     match matches.subcommand() {
         Some(("config", sub)) => match sub.subcommand() {

@@ -34,6 +34,11 @@ pub fn list(endpoint_id: u32) {
     let path = format!("endpoints/{}/docker/networks", endpoint_id);
     match client.get(&path) {
         Ok(data) => {
+            if crate::utils::json_output() {
+                crate::utils::print_json(&data);
+                return;
+            }
+
             let networks = match data.as_array() {
                 Some(arr) => arr,
                 None => {
@@ -71,6 +76,10 @@ pub fn inspect(endpoint_id: u32, name: &str) {
     let path = format!("endpoints/{}/docker/networks/{}", endpoint_id, id);
     match client.get(&path) {
         Ok(n) => {
+            if crate::utils::json_output() {
+                crate::utils::print_json(&n);
+                return;
+            }
             let short_id = n["Id"].as_str().unwrap_or("").chars().take(12).collect::<String>();
             println!("ID:       {}", short_id);
             println!("Name:     {}", n["Name"].as_str().unwrap_or("(unknown)"));

@@ -16,6 +16,12 @@ pub fn list(endpoint_id: u32) {
     let path = format!("endpoints/{}/docker/volumes", endpoint_id);
     match client.get(&path) {
         Ok(data) => {
+            if crate::utils::json_output() {
+                crate::utils::print_json(data["Volumes"].as_array()
+                    .map(|_| &data["Volumes"])
+                    .unwrap_or(&serde_json::json!([])));
+                return;
+            }
             let volumes = match data["Volumes"].as_array() {
                 Some(arr) => arr,
                 None => {
@@ -51,6 +57,10 @@ pub fn inspect(endpoint_id: u32, name: &str) {
     let path = format!("endpoints/{}/docker/volumes/{}", endpoint_id, encode(name));
     match client.get(&path) {
         Ok(v) => {
+            if crate::utils::json_output() {
+                crate::utils::print_json(&v);
+                return;
+            }
             println!("Name:       {}", v["Name"].as_str().unwrap_or("(unknown)"));
             println!("Driver:     {}", v["Driver"].as_str().unwrap_or("(unknown)"));
             println!("Scope:      {}", v["Scope"].as_str().unwrap_or("(unknown)"));

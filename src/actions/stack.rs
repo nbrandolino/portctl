@@ -35,6 +35,28 @@ pub fn list(endpoint_filter: Option<&str>) {
         crate::actions::endpoint::resolve_id(name)
     });
 
+    if crate::utils::json_output() {
+        let portainer_stacks = match client.get("stacks") {
+            Ok(data) => data.as_array().cloned().unwrap_or_default(),
+            Err(e) => {
+                eprintln!("Failed to list stacks: {e}");
+                std::process::exit(1);
+            }
+        };
+        let filtered: Vec<serde_json::Value> = portainer_stacks
+            .into_iter()
+            .filter(|s| {
+                if let Some(eid) = endpoint_id {
+                    s["EndpointId"].as_u64().unwrap_or(0) == eid as u64
+                } else {
+                    true
+                }
+            })
+            .collect();
+        crate::utils::print_json(&serde_json::json!(filtered));
+        return;
+    }
+
     // Fetch Portainer-managed stacks
     let portainer_stacks = match client.get("stacks") {
         Ok(data) => data.as_array().cloned().unwrap_or_default(),
@@ -147,6 +169,10 @@ pub fn inspect(stack_name: &str) {
     let path = format!("stacks/{}", id);
     match client.get(&path) {
         Ok(s) => {
+            if crate::utils::json_output() {
+                crate::utils::print_json(&s);
+                return;
+            }
             let name = s["Name"].as_str().unwrap_or("(unknown)");
             let status = match s["Status"].as_u64().unwrap_or(0) {
                 1 => "active",

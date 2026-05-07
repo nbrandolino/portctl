@@ -29,13 +29,20 @@ pub fn list(endpoint_id: u32) {
     let client = PortainerClient::new();
     let path = format!("endpoints/{}/docker/images/json", endpoint_id);
 
-    let images = match client.get(&path) {
-        Ok(data) => data.as_array().cloned().unwrap_or_default(),
+    let data = match client.get(&path) {
+        Ok(d) => d,
         Err(e) => {
             eprintln!("Failed to list images: {e}");
             std::process::exit(1);
         }
     };
+
+    if crate::utils::json_output() {
+        crate::utils::print_json(&data);
+        return;
+    }
+
+    let images = data.as_array().cloned().unwrap_or_default();
 
     if images.is_empty() {
         println!("No images found.");
@@ -81,6 +88,10 @@ pub fn inspect(endpoint_id: u32, image: &str) {
 
     match client.get(&path) {
         Ok(img) => {
+            if crate::utils::json_output() {
+                crate::utils::print_json(&img);
+                return;
+            }
             let id = img["Id"]
                 .as_str()
                 .unwrap_or("")

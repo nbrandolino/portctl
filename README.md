@@ -44,6 +44,15 @@ portctl --insecure container ls -e my-endpoint
 ```
 This flag is global and can be placed before any subcommand.
 
+### JSON output
+Pass `--json` before any subcommand to receive raw JSON instead of formatted tables. This works with all `ls`, `inspect`, `stats`, and `top` commands and is useful for scripting with `jq`:
+```bash
+portctl --json container ls -e my-endpoint | jq '.[].Names'
+portctl --json image ls -e my-endpoint | jq '.[] | select(.Size > 100000000) | .RepoTags'
+portctl --json container inspect -e my-endpoint myapp | jq '.State.Status'
+portctl --json endpoint ls | jq '.[].Name'
+```
+
 ### Confirmation prompts
 Destructive commands (`rm`, `prune`, `stop`, `kill`) prompt for confirmation before executing:
 ```

@@ -1,6 +1,21 @@
 use std::fs;
 use std::io::{self, Read, Write};
 use std::path::Path;
+use std::sync::OnceLock;
+
+static JSON_OUTPUT: OnceLock<bool> = OnceLock::new();
+
+pub fn set_json_output(value: bool) {
+    let _ = JSON_OUTPUT.set(value);
+}
+
+pub fn json_output() -> bool {
+    *JSON_OUTPUT.get().unwrap_or(&false)
+}
+
+pub fn print_json(v: &serde_json::Value) {
+    println!("{}", serde_json::to_string_pretty(v).unwrap_or_else(|_| "{}".to_string()));
+}
 
 pub fn ensure_config_dir_exists(config_path: &Path) {
     if !config_path.exists() {
