@@ -1,9 +1,11 @@
+// HTTP client wrapper around reqwest for all Portainer API calls
 use crate::config::Config;
 use reqwest::blocking::Client;
 use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
 use serde_json::Value;
 use std::sync::OnceLock;
 
+// Set once at startup via --insecure; read-only for the rest of the process
 static INSECURE: OnceLock<bool> = OnceLock::new();
 
 pub fn set_insecure(value: bool) {
@@ -77,10 +79,12 @@ impl PortainerClient {
         Self { base_url, client }
     }
 
+    // Standard client with a 30s timeout, used for most requests
     pub fn new() -> Self {
         Self::build(Some(std::time::Duration::from_secs(30)))
     }
 
+    // No-timeout client for streaming and long-running operations (logs, exec, image pull)
     pub fn new_no_timeout() -> Self {
         Self::build(None)
     }

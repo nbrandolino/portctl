@@ -1,5 +1,7 @@
+// Endpoint actions: list and inspect Portainer-managed Docker endpoints
 use crate::client::PortainerClient;
 
+// Resolves an endpoint name to its numeric Portainer ID
 pub fn resolve_id(name: &str) -> u32 {
     let client = PortainerClient::new();
     match client.get("endpoints") {

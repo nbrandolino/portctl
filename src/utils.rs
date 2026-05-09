@@ -1,8 +1,10 @@
+// Shared utilities: Docker stream piping, config dir setup, JSON output flag, confirmation prompt
 use std::fs;
 use std::io::{self, Read, Write};
 use std::path::Path;
 use std::sync::OnceLock;
 
+// Set once at startup via --json; checked throughout to switch output format
 static JSON_OUTPUT: OnceLock<bool> = OnceLock::new();
 
 pub fn set_json_output(value: bool) {

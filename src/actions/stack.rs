@@ -1,5 +1,7 @@
+// Stack actions: list (including external compose projects), inspect, deploy, edit, start/stop/remove
 use crate::client::PortainerClient;
 
+// Resolves a stack name to its numeric Portainer ID
 pub fn resolve_id(name: &str) -> u32 {
     let client = PortainerClient::new();
     match client.get("stacks") {

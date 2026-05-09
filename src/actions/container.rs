@@ -1,3 +1,4 @@
+// Container actions: list, inspect, lifecycle (start/stop/restart/kill/pause), exec, cp, run
 use crate::client::PortainerClient;
 use urlencoding::encode;
 
@@ -53,6 +54,7 @@ pub fn list(endpoint_filter: Option<&str>) {
     }
 }
 
+// Fetches all endpoints first, then calls list_for_endpoint for each one
 fn list_all() {
     let client = PortainerClient::new();
 
@@ -678,6 +680,7 @@ pub fn run(
         let mut exposed_ports = serde_json::Map::new();
         let mut bindings_map = serde_json::Map::new();
 
+        // Each binding is "host_port:container_port" or "container_port", with optional "/proto"
         for pb in port_bindings {
             let (host_port, container_part) = if let Some((h, c)) = pb.split_once(':') {
                 (h, c)

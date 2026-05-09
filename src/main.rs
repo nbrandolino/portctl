@@ -1,3 +1,4 @@
+// Entry point — parses CLI flags and dispatches to action handlers
 use portctl::actions::container;
 use portctl::actions::endpoint;
 use portctl::actions::image;

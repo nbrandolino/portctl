@@ -1,3 +1,4 @@
+// Image actions: list, inspect, pull, remove, prune
 use crate::client::PortainerClient;
 use std::collections::HashSet;
 use urlencoding::encode;
@@ -12,6 +13,7 @@ fn fmt_size(bytes: u64) -> String {
     }
 }
 
+// Collects image IDs currently referenced by at least one container, used to show "in use" status
 fn in_use_ids(client: &PortainerClient, endpoint_id: u32) -> HashSet<String> {
     let path = format!("endpoints/{}/docker/containers/json?all=1", endpoint_id);
     match client.get(&path) {
@@ -184,6 +186,7 @@ pub fn remove(endpoint_id: u32, image: &str) {
 
 pub fn prune(endpoint_id: u32) {
     let client = PortainerClient::new();
+    // Filter param is URL-encoded JSON: {"dangling":["false"]} — prunes all unreferenced images
     let path = format!("endpoints/{}/docker/images/prune?filters=%7B%22dangling%22%3A%5B%22false%22%5D%7D", endpoint_id);
     match client.post(&path, serde_json::json!({})) {
         Ok(data) => {

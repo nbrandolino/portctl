@@ -1,3 +1,4 @@
+// Volume actions: list, inspect, create, remove, prune
 use crate::client::PortainerClient;
 use urlencoding::encode;
 
@@ -110,6 +111,7 @@ pub fn create(endpoint_id: u32, name: &str, driver: &str) {
 
 pub fn prune(endpoint_id: u32) {
     let client = PortainerClient::new();
+    // Filter param is URL-encoded JSON: {"all":["true"]} — prunes all unused volumes, not just anonymous ones
     let path = format!("endpoints/{}/docker/volumes/prune?filters=%7B%22all%22%3A%5B%22true%22%5D%7D", endpoint_id);
     match client.post(&path, serde_json::json!({})) {
         Ok(data) => {

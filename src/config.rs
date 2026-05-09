@@ -1,3 +1,4 @@
+// Config file (~/.config/portctl/config.toml) load/save helpers
 use crate::utils::ensure_config_dir_exists;
 use serde::{Deserialize, Serialize};
 use std::fs;

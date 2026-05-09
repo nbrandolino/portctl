@@ -1,5 +1,7 @@
+// Network actions: list, inspect, create, remove, prune
 use crate::client::PortainerClient;
 
+// Resolves a network name to its hex ID string (unlike endpoint/stack IDs, network IDs are not numeric)
 fn resolve_id(endpoint_id: u32, name: &str) -> String {
     let client = PortainerClient::new();
     let path = format!("endpoints/{}/docker/networks", endpoint_id);
