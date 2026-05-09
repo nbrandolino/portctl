@@ -347,7 +347,7 @@ pub fn exec(endpoint_id: u32, container_id: &str, cmd: &[String]) {
     };
 
     // Step 2: start the exec instance and stream output
-    let start_path = format!("endpoints/{}/docker/exec/{}/start", endpoint_id, exec_id);
+    let start_path = format!("endpoints/{}/docker/exec/{}/start", endpoint_id, encode(&exec_id));
     let start_body = serde_json::json!({ "Detach": false, "Tty": false });
 
     let stream = match client.post_response(&start_path, start_body) {
@@ -361,7 +361,7 @@ pub fn exec(endpoint_id: u32, container_id: &str, cmd: &[String]) {
     crate::utils::pipe_docker_stream(stream);
 
     // Step 3: retrieve the exit code and propagate it
-    let inspect_path = format!("endpoints/{}/docker/exec/{}/json", endpoint_id, exec_id);
+    let inspect_path = format!("endpoints/{}/docker/exec/{}/json", endpoint_id, encode(&exec_id));
     let exit_code = match client.get(&inspect_path) {
         Ok(data) => data["ExitCode"].as_i64().unwrap_or(0),
         Err(e) => {
