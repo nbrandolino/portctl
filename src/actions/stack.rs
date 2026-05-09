@@ -410,7 +410,9 @@ pub fn edit(stack_name: &str) {
         .or_else(|_| std::env::var("EDITOR"))
         .unwrap_or_else(|_| "vi".to_string());
 
-    let exit_ok = match std::process::Command::new(&editor).arg(&tmp_path).status() {
+    let mut parts = editor.split_whitespace();
+    let bin = parts.next().unwrap_or("vi");
+    let exit_ok = match std::process::Command::new(bin).args(parts).arg(&tmp_path).status() {
         Ok(s) => s.success(),
         Err(e) => {
             eprintln!("Failed to open editor '{editor}': {e}");
