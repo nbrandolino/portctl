@@ -25,8 +25,20 @@ impl Config {
         if !path.exists() {
             return Config::default();
         }
-        let contents = fs::read_to_string(&path).unwrap_or_default();
-        toml::from_str(&contents).unwrap_or_default()
+        let contents = match fs::read_to_string(&path) {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!("Warning: could not read config file '{}': {e}", path.display());
+                return Config::default();
+            }
+        };
+        match toml::from_str(&contents) {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!("Warning: config file '{}' is invalid and will be ignored: {e}", path.display());
+                Config::default()
+            }
+        }
     }
 
     pub fn save(&self) {
