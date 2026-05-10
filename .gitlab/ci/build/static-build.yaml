@@ -1,5 +1,5 @@
-alpine322-build:
-  image: alpine:3.22
+static-build:
+  image: rust:alpine
   stage: build
   tags:
     - lab
@@ -12,7 +12,7 @@ alpine322-build:
     - if: '$CI_COMMIT_BRANCH == "main"'
 
   cache:
-    key: "alpine:3.22"
+    key: "rust:alpine"
     paths:
       - .cargo/registry/
       - .cargo/git/
@@ -22,14 +22,14 @@ alpine322-build:
   before_script:
     - apk update
     - apk upgrade
-    - apk add --no-cache gcc musl-dev openssl-dev openssl-libs-static pkgconf git curl
-    - command -v cargo || curl https://sh.rustup.rs -sSf | sh -s -- -y
-    - source "$CARGO_HOME/env"
+    - apk add --no-cache gcc musl-dev openssl-dev openssl-libs-static pkgconf git
+    - rustup default stable
+    - rustup target add x86_64-unknown-linux-musl
 
   script:
-    - cargo build --release
+    - cargo build --release --target x86_64-unknown-linux-musl
 
   artifacts:
     paths:
-      - target/release/portctl
+      - target/x86_64-unknown-linux-musl/release/portctl
     expire_in: 1 month
