@@ -25,19 +25,29 @@ fn main() {
         Some(("config", sub)) => match sub.subcommand() {
             Some(("set-url", args)) => {
                 let url = args.get_one::<String>("url").unwrap().clone();
-                let mut cfg = Config::load();
+                let mut cfg = Config::load_file();
                 cfg.set_url(url);
                 println!("Portainer URL saved.");
             }
             Some(("set-token", args)) => {
                 let token = args.get_one::<String>("token").unwrap().clone();
-                let mut cfg = Config::load();
+                let mut cfg = Config::load_file();
                 cfg.set_token(token);
                 println!("API token saved.");
             }
             Some(("show", _)) => {
                 let cfg = Config::load();
-                println!("portainer_url: {}", cfg.portainer_url.as_deref().unwrap_or("(not set)"));
+                let url_src = if std::env::var("PORTCTL_URL").map(|v| !v.is_empty()).unwrap_or(false) {
+                    " (from env PORTCTL_URL)"
+                } else {
+                    ""
+                };
+                let token_src = if std::env::var("PORTCTL_TOKEN").map(|v| !v.is_empty()).unwrap_or(false) {
+                    " (from env PORTCTL_TOKEN)"
+                } else {
+                    ""
+                };
+                println!("portainer_url: {}{}", cfg.portainer_url.as_deref().unwrap_or("(not set)"), url_src);
                 let token_display = cfg.api_token.as_deref().map(|t| {
                     if t.len() <= 8 {
                         "*".repeat(t.len())
@@ -45,7 +55,7 @@ fn main() {
                         format!("{}****{}", &t[..4], &t[t.len() - 4..])
                     }
                 }).unwrap_or_else(|| "(not set)".to_string());
-                println!("api_token:     {token_display}");
+                println!("api_token:     {token_display}{token_src}");
             }
             Some(("check", _)) => {
                 let client = PortainerClient::new();

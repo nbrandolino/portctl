@@ -31,6 +31,22 @@ portctl config check    # verify connectivity
 portctl config show     # print current config
 ```
 
+### Environment variables
+The Portainer URL and API token can also be supplied via environment variables, which is convenient when running `portctl` in a container or CI pipeline. When set, these take precedence over the values in `config.toml`:
+
+| Variable | Description |
+| -------- | ----------- |
+| `PORTCTL_URL` | Portainer URL (overrides `set-url`) |
+| `PORTCTL_TOKEN` | Portainer API token (overrides `set-token`) |
+
+```bash
+export PORTCTL_URL=https://portainer.example.com
+export PORTCTL_TOKEN=<your-api-token>
+portctl config check
+```
+
+With both variables set, no config file is required.
+
 ## Usage
 ```bash
 portctl <SUBCOMMAND> [OPTIONS]

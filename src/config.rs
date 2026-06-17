@@ -22,6 +22,26 @@ fn config_path() -> PathBuf {
 
 impl Config {
     pub fn load() -> Self {
+        let mut cfg = Self::load_file();
+
+        // Environment variables override the config file (useful for containers)
+        if let Ok(url) = std::env::var("PORTCTL_URL") {
+            if !url.is_empty() {
+                cfg.portainer_url = Some(url);
+            }
+        }
+        if let Ok(token) = std::env::var("PORTCTL_TOKEN") {
+            if !token.is_empty() {
+                cfg.api_token = Some(token);
+            }
+        }
+
+        cfg
+    }
+
+    // Load only the config file, ignoring environment overrides.
+    // Used by `set-url`/`set-token` so env values are never persisted to disk.
+    pub fn load_file() -> Self {
         let path = config_path();
         if !path.exists() {
             return Config::default();

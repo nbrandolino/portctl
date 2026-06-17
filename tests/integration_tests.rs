@@ -10,11 +10,24 @@ fn with_temp_home<F: FnOnce(&TempDir)>(f: F) {
     let _guard = ENV_MUTEX.lock().unwrap();
     let dir = TempDir::new().unwrap();
     let prev = std::env::var("HOME").ok();
+    // Clear config env overrides so file-based tests are not affected by ambient env
+    let prev_url = std::env::var("PORTCTL_URL").ok();
+    let prev_token = std::env::var("PORTCTL_TOKEN").ok();
+    std::env::remove_var("PORTCTL_URL");
+    std::env::remove_var("PORTCTL_TOKEN");
     std::env::set_var("HOME", dir.path());
     f(&dir);
     match prev {
         Some(v) => std::env::set_var("HOME", v),
         None => std::env::remove_var("HOME"),
+    }
+    match prev_url {
+        Some(v) => std::env::set_var("PORTCTL_URL", v),
+        None => std::env::remove_var("PORTCTL_URL"),
+    }
+    match prev_token {
+        Some(v) => std::env::set_var("PORTCTL_TOKEN", v),
+        None => std::env::remove_var("PORTCTL_TOKEN"),
     }
 }
 
@@ -101,6 +114,62 @@ fn config_set_token_does_not_clear_url() {
         let loaded = Config::load();
         assert_eq!(loaded.portainer_url.as_deref(), Some("https://portainer.local"));
         assert_eq!(loaded.api_token.as_deref(), Some("mytoken"));
+    });
+}
+
+#[test]
+fn config_env_vars_used_when_no_file() {
+    with_temp_home(|_| {
+        std::env::set_var("PORTCTL_URL", "https://env.example.com");
+        std::env::set_var("PORTCTL_TOKEN", "env-token");
+        let cfg = Config::load();
+        assert_eq!(cfg.portainer_url.as_deref(), Some("https://env.example.com"));
+        assert_eq!(cfg.api_token.as_deref(), Some("env-token"));
+        std::env::remove_var("PORTCTL_URL");
+        std::env::remove_var("PORTCTL_TOKEN");
+    });
+}
+
+#[test]
+fn config_env_vars_override_file() {
+    with_temp_home(|_| {
+        let mut cfg = Config::default();
+        cfg.portainer_url = Some("https://file.example.com".to_string());
+        cfg.api_token = Some("file-token".to_string());
+        cfg.save();
+        std::env::set_var("PORTCTL_URL", "https://env.example.com");
+        std::env::set_var("PORTCTL_TOKEN", "env-token");
+        let loaded = Config::load();
+        assert_eq!(loaded.portainer_url.as_deref(), Some("https://env.example.com"));
+        assert_eq!(loaded.api_token.as_deref(), Some("env-token"));
+        std::env::remove_var("PORTCTL_URL");
+        std::env::remove_var("PORTCTL_TOKEN");
+    });
+}
+
+#[test]
+fn config_empty_env_vars_ignored() {
+    with_temp_home(|_| {
+        let mut cfg = Config::default();
+        cfg.portainer_url = Some("https://file.example.com".to_string());
+        cfg.save();
+        std::env::set_var("PORTCTL_URL", "");
+        let loaded = Config::load();
+        assert_eq!(loaded.portainer_url.as_deref(), Some("https://file.example.com"));
+        std::env::remove_var("PORTCTL_URL");
+    });
+}
+
+#[test]
+fn config_load_file_ignores_env() {
+    with_temp_home(|_| {
+        let mut cfg = Config::default();
+        cfg.portainer_url = Some("https://file.example.com".to_string());
+        cfg.save();
+        std::env::set_var("PORTCTL_URL", "https://env.example.com");
+        let loaded = Config::load_file();
+        assert_eq!(loaded.portainer_url.as_deref(), Some("https://file.example.com"));
+        std::env::remove_var("PORTCTL_URL");
     });
 }
 
