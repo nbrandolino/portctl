@@ -32,6 +32,12 @@ fn api_error(status: reqwest::StatusCode, url: &str, body: String) -> String {
     }
 }
 
+// Built once per process and reused (cloned) so a single command doesn't reload
+// config or construct a second HTTP client when it both resolves an endpoint and
+// performs an operation. Clones share the underlying reqwest connection pool.
+static SHARED: OnceLock<PortainerClient> = OnceLock::new();
+
+#[derive(Clone)]
 pub struct PortainerClient {
     base_url: String,
     client: Client,
@@ -82,6 +88,13 @@ impl PortainerClient {
     // Standard client with a 30s timeout, used for most requests
     pub fn new() -> Self {
         Self::build(Some(std::time::Duration::from_secs(30)))
+    }
+
+    // Process-wide standard client, built on first use and reused thereafter.
+    // Prefer this over `new()` for non-streaming requests so endpoint resolution
+    // and the operation that follows share one client and connection pool.
+    pub fn shared() -> Self {
+        SHARED.get_or_init(Self::new).clone()
     }
 
     // No-timeout client for streaming and long-running operations (logs, exec, image pull)

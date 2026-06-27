@@ -28,7 +28,7 @@ fn in_use_ids(client: &PortainerClient, endpoint_id: u32) -> HashSet<String> {
 }
 
 pub fn list(endpoint_id: u32) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/images/json", endpoint_id);
 
     let data = match client.get(&path) {
@@ -85,7 +85,7 @@ pub fn list(endpoint_id: u32) {
 }
 
 pub fn inspect(endpoint_id: u32, image: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/images/{}/json", endpoint_id, encode(image));
 
     match client.get(&path) {
@@ -173,7 +173,7 @@ pub fn pull(endpoint_id: u32, image: &str) {
 }
 
 pub fn remove(endpoint_id: u32, image: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/images/{}", endpoint_id, encode(image));
     match client.delete(&path) {
         Ok(()) => println!("Image {image} removed."),
@@ -185,7 +185,7 @@ pub fn remove(endpoint_id: u32, image: &str) {
 }
 
 pub fn prune(endpoint_id: u32) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     // Filter param is URL-encoded JSON: {"dangling":["false"]} — prunes all unreferenced images
     let path = format!("endpoints/{}/docker/images/prune?filters=%7B%22dangling%22%3A%5B%22false%22%5D%7D", endpoint_id);
     match client.post(&path, serde_json::json!({})) {

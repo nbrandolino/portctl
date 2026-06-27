@@ -4,7 +4,7 @@ use urlencoding::encode;
 
 pub fn list(endpoint_filter: Option<&str>) {
     if crate::utils::json_output() {
-        let client = PortainerClient::new();
+        let client = PortainerClient::shared();
         if let Some(name) = endpoint_filter {
             let eid = crate::actions::endpoint::resolve_id(name);
             let path = format!("endpoints/{}/docker/containers/json?all=1", eid);
@@ -41,7 +41,7 @@ pub fn list(endpoint_filter: Option<&str>) {
     }
 
     if let Some(name) = endpoint_filter {
-        let client = PortainerClient::new();
+        let client = PortainerClient::shared();
         let eid = crate::actions::endpoint::resolve_id(name);
         println!("{:<16} {:<35} {:<12} {}", "ID", "NAME", "STATE", "IMAGE");
         println!("{}", "-".repeat(80));
@@ -56,7 +56,7 @@ pub fn list(endpoint_filter: Option<&str>) {
 
 // Fetches all endpoints first, then calls list_for_endpoint for each one
 fn list_all() {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
 
     let endpoints = match client.get("endpoints") {
         Ok(data) => match data.as_array() {
@@ -127,7 +127,7 @@ pub fn logs(endpoint_id: u32, container_id: &str, tail: u32, timestamps: bool, f
     let client = if follow {
         PortainerClient::new_no_timeout()
     } else {
-        PortainerClient::new()
+        PortainerClient::shared()
     };
     let path = format!(
         "endpoints/{}/docker/containers/{}/logs?stdout=1&stderr=1&tail={}&timestamps={}&follow={}",
@@ -148,7 +148,7 @@ pub fn logs(endpoint_id: u32, container_id: &str, tail: u32, timestamps: bool, f
 }
 
 pub fn stats(endpoint_id: u32, container_id: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/containers/{}/stats?stream=false", endpoint_id, encode(container_id));
     match client.get(&path) {
         Ok(data) => {
@@ -230,7 +230,7 @@ fn fmt_bytes(bytes: u64) -> String {
 }
 
 pub fn start(endpoint_id: u32, container_id: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/containers/{}/start", endpoint_id, encode(container_id));
     match client.post_empty(&path) {
         Ok(()) => println!("Container {container_id} started."),
@@ -242,7 +242,7 @@ pub fn start(endpoint_id: u32, container_id: &str) {
 }
 
 pub fn stop(endpoint_id: u32, container_id: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/containers/{}/stop", endpoint_id, encode(container_id));
     match client.post_empty(&path) {
         Ok(()) => println!("Container {container_id} stopped."),
@@ -254,7 +254,7 @@ pub fn stop(endpoint_id: u32, container_id: &str) {
 }
 
 pub fn restart(endpoint_id: u32, container_id: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/containers/{}/restart", endpoint_id, encode(container_id));
     match client.post_empty(&path) {
         Ok(()) => println!("Container {container_id} restarted."),
@@ -266,7 +266,7 @@ pub fn restart(endpoint_id: u32, container_id: &str) {
 }
 
 pub fn inspect(endpoint_id: u32, container_id: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/containers/{}/json", endpoint_id, encode(container_id));
     match client.get(&path) {
         Ok(data) => {
@@ -393,7 +393,7 @@ pub fn cp(endpoint_id: u32, src: &str, dest: &str) {
 }
 
 fn cp_from_container(endpoint_id: u32, container_id: &str, container_path: &str, local_path: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let api_path = format!(
         "endpoints/{}/docker/containers/{}/archive?path={}",
         endpoint_id, encode(container_id), encode(container_path)
@@ -479,7 +479,7 @@ fn cp_to_container(endpoint_id: u32, local_path: &str, container_id: &str, conta
         }
     };
 
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let api_path = format!(
         "endpoints/{}/docker/containers/{}/archive?path={}",
         endpoint_id, encode(container_id), encode(container_path)
@@ -495,7 +495,7 @@ fn cp_to_container(endpoint_id: u32, local_path: &str, container_id: &str, conta
 }
 
 pub fn pause(endpoint_id: u32, container_id: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/containers/{}/pause", endpoint_id, encode(container_id));
     match client.post_empty(&path) {
         Ok(()) => println!("Container {container_id} paused."),
@@ -507,7 +507,7 @@ pub fn pause(endpoint_id: u32, container_id: &str) {
 }
 
 pub fn unpause(endpoint_id: u32, container_id: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/containers/{}/unpause", endpoint_id, encode(container_id));
     match client.post_empty(&path) {
         Ok(()) => println!("Container {container_id} unpaused."),
@@ -519,7 +519,7 @@ pub fn unpause(endpoint_id: u32, container_id: &str) {
 }
 
 pub fn top(endpoint_id: u32, container_id: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/containers/{}/top", endpoint_id, encode(container_id));
     match client.get(&path) {
         Ok(data) => {
@@ -588,7 +588,7 @@ pub fn top(endpoint_id: u32, container_id: &str) {
 }
 
 pub fn kill(endpoint_id: u32, container_id: &str, signal: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!(
         "endpoints/{}/docker/containers/{}/kill?signal={}",
         endpoint_id, encode(container_id), encode(signal)
@@ -603,7 +603,7 @@ pub fn kill(endpoint_id: u32, container_id: &str, signal: &str) {
 }
 
 pub fn rename(endpoint_id: u32, container_id: &str, new_name: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!(
         "endpoints/{}/docker/containers/{}/rename?name={}",
         endpoint_id, encode(container_id), encode(new_name)
@@ -618,7 +618,7 @@ pub fn rename(endpoint_id: u32, container_id: &str, new_name: &str) {
 }
 
 pub fn prune(endpoint_id: u32) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/containers/prune", endpoint_id);
     match client.post(&path, serde_json::json!({})) {
         Ok(data) => {
@@ -751,7 +751,7 @@ pub fn run(
 }
 
 pub fn remove(endpoint_id: u32, container_id: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/containers/{}", endpoint_id, encode(container_id));
     match client.delete(&path) {
         Ok(()) => println!("Container {container_id} removed."),

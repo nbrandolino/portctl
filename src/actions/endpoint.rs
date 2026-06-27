@@ -3,7 +3,7 @@ use crate::client::PortainerClient;
 
 // Resolves an endpoint name to its numeric Portainer ID
 pub fn resolve_id(name: &str) -> u32 {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     match client.get("endpoints") {
         Ok(data) => {
             let endpoints = match data.as_array() {
@@ -31,7 +31,7 @@ pub fn resolve_id(name: &str) -> u32 {
 }
 
 pub fn inspect(name: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let id = resolve_id(name);
     let path = format!("endpoints/{}", id);
     match client.get(&path) {
@@ -82,7 +82,7 @@ pub fn inspect(name: &str) {
 }
 
 pub fn list() {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     match client.get("endpoints") {
         Ok(data) => {
             if crate::utils::json_output() {

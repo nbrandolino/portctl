@@ -12,7 +12,7 @@ fn fmt_size(bytes: u64) -> String {
 }
 
 pub fn prune(endpoint_filter: Option<&str>) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
 
     let endpoints: Vec<(u32, String)> = if let Some(name) = endpoint_filter {
         let id = endpoint::resolve_id(name);

@@ -58,7 +58,7 @@ fn main() {
                 println!("api_token:     {token_display}{token_src}");
             }
             Some(("check", _)) => {
-                let client = PortainerClient::new();
+                let client = PortainerClient::shared();
                 match client.get("endpoints") {
                     Ok(_) => println!("Connection successful."),
                     Err(e) => {

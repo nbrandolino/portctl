@@ -13,7 +13,7 @@ fn fmt_size(bytes: u64) -> String {
 }
 
 pub fn list(endpoint_id: u32) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/volumes", endpoint_id);
     match client.get(&path) {
         Ok(data) => {
@@ -54,7 +54,7 @@ pub fn list(endpoint_id: u32) {
 }
 
 pub fn inspect(endpoint_id: u32, name: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/volumes/{}", endpoint_id, encode(name));
     match client.get(&path) {
         Ok(v) => {
@@ -94,7 +94,7 @@ pub fn inspect(endpoint_id: u32, name: &str) {
 }
 
 pub fn create(endpoint_id: u32, name: &str, driver: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/volumes/create", endpoint_id);
     let body = serde_json::json!({
         "Name": name,
@@ -110,7 +110,7 @@ pub fn create(endpoint_id: u32, name: &str, driver: &str) {
 }
 
 pub fn prune(endpoint_id: u32) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     // Filter param is URL-encoded JSON: {"all":["true"]} — prunes all unused volumes, not just anonymous ones
     let path = format!("endpoints/{}/docker/volumes/prune?filters=%7B%22all%22%3A%5B%22true%22%5D%7D", endpoint_id);
     match client.post(&path, serde_json::json!({})) {
@@ -127,7 +127,7 @@ pub fn prune(endpoint_id: u32) {
 }
 
 pub fn remove(endpoint_id: u32, name: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/volumes/{}", endpoint_id, encode(name));
     match client.delete(&path) {
         Ok(()) => println!("Volume {name} removed."),

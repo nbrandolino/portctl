@@ -3,7 +3,7 @@ use crate::client::PortainerClient;
 
 // Resolves a network name to its hex ID string (unlike endpoint/stack IDs, network IDs are not numeric)
 fn resolve_id(endpoint_id: u32, name: &str) -> String {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/networks", endpoint_id);
     match client.get(&path) {
         Ok(data) => {
@@ -32,7 +32,7 @@ fn resolve_id(endpoint_id: u32, name: &str) -> String {
 }
 
 pub fn list(endpoint_id: u32) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/networks", endpoint_id);
     match client.get(&path) {
         Ok(data) => {
@@ -73,7 +73,7 @@ pub fn list(endpoint_id: u32) {
 }
 
 pub fn inspect(endpoint_id: u32, name: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let id = resolve_id(endpoint_id, name);
     let path = format!("endpoints/{}/docker/networks/{}", endpoint_id, id);
     match client.get(&path) {
@@ -120,7 +120,7 @@ pub fn inspect(endpoint_id: u32, name: &str) {
 }
 
 pub fn create(endpoint_id: u32, name: &str, driver: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/networks/create", endpoint_id);
     let body = serde_json::json!({
         "Name": name,
@@ -137,7 +137,7 @@ pub fn create(endpoint_id: u32, name: &str, driver: &str) {
 }
 
 pub fn prune(endpoint_id: u32) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("endpoints/{}/docker/networks/prune", endpoint_id);
     match client.post(&path, serde_json::json!({})) {
         Ok(data) => {
@@ -152,7 +152,7 @@ pub fn prune(endpoint_id: u32) {
 }
 
 pub fn remove(endpoint_id: u32, name: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let id = resolve_id(endpoint_id, name);
     let path = format!("endpoints/{}/docker/networks/{}", endpoint_id, id);
     match client.delete(&path) {

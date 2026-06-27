@@ -3,7 +3,7 @@ use crate::client::PortainerClient;
 
 // Resolves a stack name to its numeric Portainer ID
 pub fn resolve_id(name: &str) -> u32 {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     match client.get("stacks") {
         Ok(data) => {
             let stacks = match data.as_array() {
@@ -31,7 +31,7 @@ pub fn resolve_id(name: &str) -> u32 {
 }
 
 pub fn list(endpoint_filter: Option<&str>) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
 
     let endpoint_id = endpoint_filter.map(|name| {
         crate::actions::endpoint::resolve_id(name)
@@ -166,7 +166,7 @@ pub fn list(endpoint_filter: Option<&str>) {
 }
 
 pub fn inspect(stack_name: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let id = resolve_id(stack_name);
     let path = format!("stacks/{}", id);
     match client.get(&path) {
@@ -224,7 +224,7 @@ pub fn inspect(stack_name: &str) {
 }
 
 pub fn start(stack_name: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let id = resolve_id(stack_name);
     let path = format!("stacks/{}/start", id);
     match client.post_empty(&path) {
@@ -237,7 +237,7 @@ pub fn start(stack_name: &str) {
 }
 
 pub fn stop(stack_name: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let id = resolve_id(stack_name);
     let path = format!("stacks/{}/stop", id);
     match client.post_empty(&path) {
@@ -250,7 +250,7 @@ pub fn stop(stack_name: &str) {
 }
 
 pub fn update(stack_name: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let id = resolve_id(stack_name);
 
     let stack = match client.get(&format!("stacks/{}", id)) {
@@ -295,7 +295,7 @@ pub fn deploy_from_file(name: &str, endpoint_name: &str, file_path: &str, env_va
     };
 
     let eid = crate::actions::endpoint::resolve_id(endpoint_name);
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("stacks?type=2&method=string&endpointId={}", eid);
     let env: Vec<serde_json::Value> = env_vars.iter()
         .map(|(k, v)| serde_json::json!({"name": k, "value": v}))
@@ -325,7 +325,7 @@ pub fn deploy_from_git(
     env_vars: &[(String, String)],
 ) {
     let eid = crate::actions::endpoint::resolve_id(endpoint_name);
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let path = format!("stacks?type=2&method=repository&endpointId={}", eid);
 
     let env: Vec<serde_json::Value> = env_vars.iter()
@@ -356,7 +356,7 @@ pub fn deploy_from_git(
 }
 
 pub fn edit(stack_name: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let id = resolve_id(stack_name);
 
     let stack = match client.get(&format!("stacks/{}", id)) {
@@ -458,7 +458,7 @@ pub fn edit(stack_name: &str) {
 }
 
 pub fn compose(stack_name: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let id = resolve_id(stack_name);
     let path = format!("stacks/{}/file", id);
     match client.get(&path) {
@@ -474,7 +474,7 @@ pub fn compose(stack_name: &str) {
 }
 
 pub fn remove(stack_name: &str) {
-    let client = PortainerClient::new();
+    let client = PortainerClient::shared();
     let id = resolve_id(stack_name);
 
     let stack = match client.get(&format!("stacks/{}", id)) {
