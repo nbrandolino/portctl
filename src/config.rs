@@ -68,9 +68,40 @@ impl Config {
             ensure_config_dir_exists(dir);
         }
         let contents = toml::to_string(self).unwrap_or_default();
-        if let Err(e) = fs::write(&path, contents) {
+
+        // The config file holds the API token in plaintext, so restrict it to the
+        // owner (0600). On Unix, create it with those permissions from the start so
+        // the token is never briefly readable by others.
+        let write_result = {
+            #[cfg(unix)]
+            {
+                use std::io::Write;
+                use std::os::unix::fs::OpenOptionsExt;
+                fs::OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .truncate(true)
+                    .mode(0o600)
+                    .open(&path)
+                    .and_then(|mut f| f.write_all(contents.as_bytes()))
+            }
+            #[cfg(not(unix))]
+            {
+                fs::write(&path, contents)
+            }
+        };
+        if let Err(e) = write_result {
             eprintln!("Error: failed to write config file '{}': {e}", path.display());
             std::process::exit(1);
+        }
+
+        // An existing file keeps its old mode through O_CREAT, so tighten it explicitly.
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            if let Err(e) = fs::set_permissions(&path, fs::Permissions::from_mode(0o600)) {
+                eprintln!("Warning: failed to restrict permissions on config file '{}': {e}", path.display());
+            }
         }
     }
 
