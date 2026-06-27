@@ -6,12 +6,16 @@ workflow:
     - when: never
 
 stages:
+  - lint
   - build
   - test
 
 include:
   - local: ".gitlab/ci/templates/rpm-build.yaml"
   - local: ".gitlab/ci/templates/test.yaml"
+  - local: ".gitlab/ci/templates/lint.yaml"
+
+  - local: ".gitlab/ci/lint/clippy.yaml"
 
   - local: ".gitlab/ci/build/el9-rpm-build.yaml"
   - local: ".gitlab/ci/build/el10-rpm-build.yaml"

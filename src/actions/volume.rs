@@ -36,7 +36,7 @@ pub fn list(endpoint_id: u32) {
                 return;
             }
 
-            println!("{:<30} {:<12} {}", "NAME", "DRIVER", "MOUNTPOINT");
+            println!("{:<30} {:<12} MOUNTPOINT", "NAME", "DRIVER");
             println!("{}", "-".repeat(80));
 
             for v in volumes {

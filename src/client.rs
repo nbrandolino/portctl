@@ -85,7 +85,10 @@ impl PortainerClient {
         Self { base_url, client }
     }
 
-    // Standard client with a 30s timeout, used for most requests
+    // Standard client with a 30s timeout, used for most requests.
+    // No `Default` impl on purpose: constructing a client loads config and may
+    // exit the process, which is not what callers expect from `Default`.
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self::build(Some(std::time::Duration::from_secs(30)))
     }

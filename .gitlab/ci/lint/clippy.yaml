@@ -1,0 +1,6 @@
+clippy:
+  extends: .lint_template
+  image: fedora:43
+  stage: lint
+  tags:
+    - lab

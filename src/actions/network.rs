@@ -54,7 +54,7 @@ pub fn list(endpoint_id: u32) {
                 return;
             }
 
-            println!("{:<16} {:<30} {:<12} {}", "ID", "NAME", "DRIVER", "SCOPE");
+            println!("{:<16} {:<30} {:<12} SCOPE", "ID", "NAME", "DRIVER");
             println!("{}", "-".repeat(72));
 
             for n in networks {

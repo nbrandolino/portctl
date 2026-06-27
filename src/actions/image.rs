@@ -53,7 +53,7 @@ pub fn list(endpoint_id: u32) {
 
     let in_use = in_use_ids(&client, endpoint_id);
 
-    println!("{:<14} {:<40} {:<10} {}", "ID", "REPOSITORY:TAG", "SIZE", "IN USE");
+    println!("{:<14} {:<40} {:<10} IN USE", "ID", "REPOSITORY:TAG", "SIZE");
     println!("{}", "-".repeat(72));
 
     for img in &images {

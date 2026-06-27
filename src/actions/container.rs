@@ -43,7 +43,7 @@ pub fn list(endpoint_filter: Option<&str>) {
     if let Some(name) = endpoint_filter {
         let client = PortainerClient::shared();
         let eid = crate::actions::endpoint::resolve_id(name);
-        println!("{:<16} {:<35} {:<12} {}", "ID", "NAME", "STATE", "IMAGE");
+        println!("{:<16} {:<35} {:<12} IMAGE", "ID", "NAME", "STATE");
         println!("{}", "-".repeat(80));
         let count = list_for_endpoint(&client, eid, None);
         if count == 0 {
@@ -72,7 +72,7 @@ fn list_all() {
         }
     };
 
-    println!("{:<16} {:<25} {:<12} {:<12} {}", "ID", "NAME", "STATE", "ENDPOINT", "IMAGE");
+    println!("{:<16} {:<25} {:<12} {:<12} IMAGE", "ID", "NAME", "STATE", "ENDPOINT");
     println!("{}", "-".repeat(90));
 
     let total: usize = endpoints.iter().filter_map(|ep| {
@@ -633,6 +633,9 @@ pub fn prune(endpoint_id: u32) {
     }
 }
 
+// Mirrors the many independent flags of `docker run`; grouping them into a
+// struct would not make the call site any clearer.
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     endpoint_id: u32,
     image: &str,

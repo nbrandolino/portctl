@@ -1,0 +1,21 @@
+.lint_template:
+  variables:
+    CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
+    RUSTUP_HOME: "$CI_PROJECT_DIR/.rustup"
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "test"'
+
+  cache:
+    key: "$CI_JOB_IMAGE"
+    paths:
+      - .cargo/registry/
+      - .cargo/git/
+      - .cargo/bin/
+      - .rustup/
+
+  before_script:
+    - dnf install -y gcc gcc-c++ openssl-devel pkgconf-pkg-config git cargo clippy
+
+  script:
+    - cargo clippy --all-targets -- -D warnings

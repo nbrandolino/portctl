@@ -103,7 +103,7 @@ pub fn list() {
                 return;
             }
 
-            println!("{:<30} {:<15} {}", "NAME", "TYPE", "URL");
+            println!("{:<30} {:<15} URL", "NAME", "TYPE");
             println!("{}", "-".repeat(64));
 
             for ep in endpoints {

@@ -135,7 +135,7 @@ pub fn list(endpoint_filter: Option<&str>) {
         return;
     }
 
-    println!("{:<35} {:<12} {:<12} {}", "NAME", "STATUS", "TYPE", "ENDPOINT");
+    println!("{:<35} {:<12} {:<12} ENDPOINT", "NAME", "STATUS", "TYPE");
     println!("{}", "-".repeat(76));
 
     for s in filtered_stacks {

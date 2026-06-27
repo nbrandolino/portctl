@@ -64,9 +64,10 @@ fn config_load_invalid_toml_returns_default() {
 #[test]
 fn config_round_trip() {
     with_temp_home(|_| {
-        let mut cfg = Config::default();
-        cfg.portainer_url = Some("https://portainer.example.com".to_string());
-        cfg.api_token = Some("mytoken".to_string());
+        let cfg = Config {
+            portainer_url: Some("https://portainer.example.com".to_string()),
+            api_token: Some("mytoken".to_string()),
+        };
         cfg.save();
         let loaded = Config::load();
         assert_eq!(loaded.portainer_url.as_deref(), Some("https://portainer.example.com"));
@@ -133,9 +134,10 @@ fn config_env_vars_used_when_no_file() {
 #[test]
 fn config_env_vars_override_file() {
     with_temp_home(|_| {
-        let mut cfg = Config::default();
-        cfg.portainer_url = Some("https://file.example.com".to_string());
-        cfg.api_token = Some("file-token".to_string());
+        let cfg = Config {
+            portainer_url: Some("https://file.example.com".to_string()),
+            api_token: Some("file-token".to_string()),
+        };
         cfg.save();
         std::env::set_var("PORTCTL_URL", "https://env.example.com");
         std::env::set_var("PORTCTL_TOKEN", "env-token");
@@ -150,8 +152,10 @@ fn config_env_vars_override_file() {
 #[test]
 fn config_empty_env_vars_ignored() {
     with_temp_home(|_| {
-        let mut cfg = Config::default();
-        cfg.portainer_url = Some("https://file.example.com".to_string());
+        let cfg = Config {
+            portainer_url: Some("https://file.example.com".to_string()),
+            ..Default::default()
+        };
         cfg.save();
         std::env::set_var("PORTCTL_URL", "");
         let loaded = Config::load();
@@ -163,8 +167,10 @@ fn config_empty_env_vars_ignored() {
 #[test]
 fn config_load_file_ignores_env() {
     with_temp_home(|_| {
-        let mut cfg = Config::default();
-        cfg.portainer_url = Some("https://file.example.com".to_string());
+        let cfg = Config {
+            portainer_url: Some("https://file.example.com".to_string()),
+            ..Default::default()
+        };
         cfg.save();
         std::env::set_var("PORTCTL_URL", "https://env.example.com");
         let loaded = Config::load_file();
