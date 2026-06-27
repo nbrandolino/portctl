@@ -3,6 +3,9 @@
 
 ## Requirements
 - **Rust**: Required to compile the utility.
+- **Build dependencies**: A C compiler and OpenSSL development headers are needed to build from source (`portctl` links against the system OpenSSL via `reqwest`):
+  - Fedora / RHEL / EL: `sudo dnf install gcc openssl-devel pkgconf-pkg-config`
+  - Debian / Ubuntu: `sudo apt install gcc libssl-dev pkg-config`
 - **Linux Environment**: Currently designed to work on Linux-based systems.
 - **Portainer**: Must have the Portainer application installed and accessible.
 
@@ -263,6 +266,14 @@ portctl container kill -e my-endpoint my-container            # SIGTERM (default
 portctl container kill -e my-endpoint my-container -s SIGKILL
 portctl container kill -e my-endpoint my-container -s SIGHUP
 ```
+
+#### container exec
+Runs a single command inside a container and streams its output.
+```bash
+portctl container exec -e my-endpoint my-container -- ls -la /app
+portctl container exec -e my-endpoint my-container -- sh -c "cat /etc/os-release"
+```
+> **Note:** `exec` is non-interactive — it does not allocate a TTY or forward stdin (unlike `docker exec -it`). It is intended for one-off commands; an interactive shell session is not supported.
 
 #### container cp
 Use `<container>:<path>` to refer to a path inside a container.
