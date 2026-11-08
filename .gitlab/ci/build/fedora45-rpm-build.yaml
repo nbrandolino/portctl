@@ -1,0 +1,6 @@
+fedora45-rpm-build:
+  extends: .rpm_build_template
+  image: fedora:45
+  stage: build
+  tags:
+    - lab

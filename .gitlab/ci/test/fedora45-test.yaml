@@ -1,0 +1,6 @@
+fedora45-test:
+  extends: .test_template
+  image: fedora:45
+  stage: test
+  tags:
+    - lab
